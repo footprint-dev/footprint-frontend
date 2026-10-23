@@ -115,3 +115,7 @@ server/app.ts       生产静态资源服务
 server/start.ts     生产启动入口
 tests/              前端逻辑和 HTTP 集成测试
 ```
+
+## 许可证
+
+本项目采用 [GNU Affero General Public License v3.0](LICENSE), SPDX 标识为 `AGPL-3.0-only`.
