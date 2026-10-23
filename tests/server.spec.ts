@@ -24,7 +24,7 @@ async function listen(server: Server) {
 }
 
 async function consoleServer(changes: Partial<ServerConfig> = {}, options: { fetchApi?: typeof fetch } = {}) {
-  const config = loadConfig({ envFile: false, env: { API_BASE_URL: upstreamOrigin, INGEST_TOKEN: "upstream-secret", CONSOLE_PASSWORD: "console-password", MAPBOX_PUBLIC_TOKEN: "pk.public" } });
+  const config = loadConfig({ envFile: false, env: { API_BACKEND: "serverless", API_BASE_URL: upstreamOrigin, INGEST_TOKEN: "upstream-secret", CONSOLE_PASSWORD: "console-password", MAPBOX_PUBLIC_TOKEN: "pk.public" } });
   return listen(createFrontendServer({ ...config, ...changes }, { dist, ...options }));
 }
 
@@ -96,6 +96,26 @@ describe("standalone console and CF API compatibility", () => {
     expect(requests[0].url).toBe("/api/locations?view=raw&order=asc&limit=5000&offset=0&device=phone");
     expect(requests[0].headers.authorization).toBe("Bearer upstream-secret");
     for (const key of ["cookie", "token", "cf-access-jwt-assertion"]) expect(requests[0].headers[key]).toBeUndefined();
+  });
+
+  it("leaves serverful authentication to the backend and forwards browser credentials and response cookies", async () => {
+    const config = loadConfig({ envFile: false, env: {
+      API_BACKEND: "serverful", API_BASE_URL: upstreamOrigin, INGEST_TOKEN: "serverless-only",
+    } });
+    const origin = await listen(createFrontendServer(config, { dist }));
+    const unauthenticated = await nativeFetch(origin + "/api/me");
+    expect(unauthenticated.status).toBe(401);
+    expect(await unauthenticated.json()).toEqual({ error: { code: "unauthorized" } });
+    expect(requests).toHaveLength(1);
+    expect(requests[0].headers.authorization).toBeUndefined();
+
+    const response = await nativeFetch(origin + "/api/me", {
+      headers: { authorization: "Bearer upstream-secret", cookie: "backend-session=private" },
+    });
+    expect(response.status).toBe(200);
+    expect(requests[1].headers.authorization).toBe("Bearer upstream-secret");
+    expect(requests[1].headers.cookie).toBe("backend-session=private");
+    expect(response.headers.getSetCookie()).toEqual(["upstream-cookie=private"]);
   });
 
   it("runs the existing browser API client against the HTTP gateway, including pagination and project writes", async () => {

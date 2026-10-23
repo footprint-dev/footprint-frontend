@@ -3,6 +3,7 @@ import { parseEnv } from "node:util";
 import { fileURLToPath } from "node:url";
 
 export interface ServerConfig {
+  backend: "serverful" | "serverless";
   apiBaseUrl: string;
   ingestToken: string;
   mapboxPublicToken: string;
@@ -33,12 +34,14 @@ export function loadConfig(options: {
   const localPreview = options.mode === "development";
   const envFile = options.envFile ?? fileURLToPath(new URL("../.env", import.meta.url));
   const env = { ...(envFile && existsSync(envFile) ? parseEnv(readFileSync(envFile, "utf8")) : {}), ...(options.env ?? process.env) };
-  const ingestToken = env.INGEST_TOKEN?.trim() || "";
-  if (!localPreview && !ingestToken) throw new Error("Set INGEST_TOKEN to the existing API Worker's token");
-  if (!localPreview && !env.API_BASE_URL) throw new Error("Set API_BASE_URL to the existing API Worker's HTTP(S) origin");
+  const backend = env.API_BACKEND || "serverless";
+  if (backend !== "serverful" && backend !== "serverless") throw new Error("API_BACKEND must be serverful or serverless");
+  const ingestToken = backend === "serverless" ? env.INGEST_TOKEN?.trim() || "" : "";
+  if (!localPreview && backend === "serverless" && !ingestToken) throw new Error("Set INGEST_TOKEN to the API Worker's token");
+  if (!localPreview && !env.API_BASE_URL) throw new Error("Set API_BASE_URL to the backend's HTTP(S) origin");
 
   let credentials: ServerConfig["credentials"] = null;
-  if (!localPreview) {
+  if (!localPreview && backend === "serverless") {
     const auth = env.CONSOLE_AUTH || "basic";
     if (auth !== "basic" && auth !== "external") throw new Error("CONSOLE_AUTH must be basic or external");
     if (auth === "basic") {
@@ -51,6 +54,7 @@ export function loadConfig(options: {
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error("PORT must be an integer between 1 and 65535");
 
   return {
+    backend,
     apiBaseUrl: origin(env.API_BASE_URL || "http://127.0.0.1:8787", "API_BASE_URL"),
     ingestToken,
     mapboxPublicToken: env.MAPBOX_PUBLIC_TOKEN?.startsWith("pk.") ? env.MAPBOX_PUBLIC_TOKEN : "",

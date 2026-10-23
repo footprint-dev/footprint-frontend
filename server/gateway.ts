@@ -65,24 +65,27 @@ export function createConsoleMiddleware(config: ServerConfig, fetchApi: typeof f
         error(response, 403, "forbidden", "Project writes require a same-origin request");
         return;
       }
-      if (!config.ingestToken) {
+      if (config.backend === "serverless" && !config.ingestToken) {
         error(response, 503, "api_not_configured", "Set INGEST_TOKEN on the console server");
         return;
       }
       const payload = write ? await body(request) : undefined;
       if (payload === null) { error(response, 413, "payload_too_large", "Project requests must not exceed 64 KiB"); return; }
-      const headers = new Headers({ authorization: `Bearer ${config.ingestToken}` });
-      for (const key of ["content-type", "accept"]) {
+      const headers = new Headers();
+      const forwardedHeaders = config.backend === "serverful"
+        ? ["content-type", "accept", "authorization", "cookie"] : ["content-type", "accept"];
+      for (const key of forwardedHeaders) {
         const value = request.headers[key];
         if (typeof value === "string") headers.set(key, value);
       }
+      if (config.backend === "serverless") headers.set("authorization", `Bearer ${config.ingestToken}`);
       const upstream = await fetchApi(`${config.apiBaseUrl}${path}${url.search}`, {
         method: request.method, headers, body: payload ? new Uint8Array(payload) : undefined,
         redirect: "manual", signal: AbortSignal.timeout(30_000),
       });
       if (upstream.status >= 300 && upstream.status < 400) {
         await upstream.body?.cancel();
-        error(response, 502, "api_unavailable", "The API redirected; check API_BASE_URL points to the API Worker");
+        error(response, 502, "api_unavailable", "The API redirected; check the selected backend's API origin");
         return;
       }
       const result = Buffer.from(await upstream.arrayBuffer());
@@ -91,6 +94,10 @@ export function createConsoleMiddleware(config: ServerConfig, fetchApi: typeof f
       for (const key of ["content-type", "allow", "www-authenticate"]) {
         const value = upstream.headers.get(key);
         if (value) response.setHeader(key, value);
+      }
+      if (config.backend === "serverful") {
+        const cookies = upstream.headers.getSetCookie();
+        if (cookies.length) response.setHeader("Set-Cookie", cookies);
       }
       response.end(result);
     } catch {
