@@ -1,25 +1,21 @@
-import { createHash, timingSafeEqual } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { ServerConfig } from "./config.ts";
 
 export function json(response: ServerResponse, status: number, body: unknown) {
-  response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+  response.writeHead(status, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+  });
   response.end(JSON.stringify(body));
 }
 
-function error(response: ServerResponse, status: number, code: string, message: string) {
+function error(
+  response: ServerResponse,
+  status: number,
+  code: string,
+  message: string,
+) {
   json(response, status, { error: { code, message } });
-}
-
-function authenticate(request: IncomingMessage, response: ServerResponse, config: ServerConfig): boolean {
-  if (!config.credentials) return true;
-  const match = request.headers.authorization?.match(/^Basic (\S+)$/i);
-  const actual = match ? Buffer.from(match[1], "base64").toString("utf8") : "";
-  const digest = (value: string) => createHash("sha256").update(value).digest();
-  if (match && timingSafeEqual(digest(actual), digest(`${config.credentials.username}:${config.credentials.password}`))) return true;
-  response.setHeader("WWW-Authenticate", 'Basic realm="Footprint", charset="UTF-8"');
-  error(response, 401, "unauthorized", "Console authentication is required");
-  return false;
 }
 
 async function body(request: IncomingMessage): Promise<Buffer | null> {
@@ -33,59 +29,114 @@ async function body(request: IncomingMessage): Promise<Buffer | null> {
   return size > 65_536 ? null : Buffer.concat(chunks);
 }
 
-export function createConsoleMiddleware(config: ServerConfig, fetchApi: typeof fetch = fetch) {
-  return async (request: IncomingMessage, response: ServerResponse, next: () => void) => {
+export function createConsoleMiddleware(
+  config: ServerConfig,
+  fetchApi: typeof fetch = fetch,
+) {
+  return async (
+    request: IncomingMessage,
+    response: ServerResponse,
+    next: () => void,
+  ) => {
     try {
-      const url = new URL(request.url || "/", "http://localhost"), path = url.pathname;
-      if (path === "/health" && (request.method === "GET" || request.method === "HEAD")) {
+      const url = new URL(request.url || "/", "http://localhost"),
+        path = url.pathname;
+      if (
+        path === "/health" &&
+        (request.method === "GET" || request.method === "HEAD")
+      ) {
         json(response, 200, { status: "ok", name: "footprint-frontend" });
         return;
       }
-      if (!authenticate(request, response, config)) return;
-      if (path === "/api/console-config") {
+      if (config.backend === "serverless" && path === "/api/console-config") {
         if (request.method !== "GET") {
           response.setHeader("Allow", "GET");
           error(response, 405, "method_not_allowed", "Use GET");
           return;
         }
-        json(response, 200, { mapboxToken: config.mapboxPublicToken, mapboxStyle: config.mapboxStyle, localPreview: config.localPreview });
+        json(response, 200, {
+          mapboxToken: config.mapboxPublicToken,
+          mapboxStyle: config.mapboxStyle,
+          localPreview: config.localPreview,
+        });
         return;
       }
-      if (path !== "/api" && !path.startsWith("/api/")) { next(); return; }
+      if (path !== "/api" && !path.startsWith("/api/")) {
+        next();
+        return;
+      }
 
-      const read = request.method === "GET" && (/^\/api\/(me|location|locations|projects)$/.test(path) || /^\/api\/projects\/[^/]+$/.test(path));
-      const write = (request.method === "POST" && path === "/api/projects")
-        || (request.method === "PATCH" && /^\/api\/projects\/[1-9]\d*$/.test(path));
+      const read =
+        request.method === "GET" &&
+        (/^\/api\/(console-config|me|location|locations|projects)$/.test(
+          path,
+        ) ||
+          /^\/api\/projects\/[^/]+$/.test(path));
+      const write =
+        (request.method === "POST" && path === "/api/projects") ||
+        (request.method === "PATCH" &&
+          /^\/api\/projects\/[1-9]\d*$/.test(path));
       if (!read && !write) {
-        error(response, 405, "method_not_allowed", "This console only reads tracks and manages projects");
+        error(
+          response,
+          405,
+          "method_not_allowed",
+          "This console only reads tracks and manages projects",
+        );
         return;
       }
-      const expectedOrigin = config.publicOrigin || `http://${request.headers.host}`;
-      if (write && (request.headers.origin !== expectedOrigin || request.headers["sec-fetch-site"] === "cross-site")) {
-        error(response, 403, "forbidden", "Project writes require a same-origin request");
-        return;
-      }
-      if (config.backend === "serverless" && !config.ingestToken) {
-        error(response, 503, "api_not_configured", "Set INGEST_TOKEN on the console server");
+      const expectedOrigin =
+        config.publicOrigin || `http://${request.headers.host}`;
+      if (
+        write &&
+        (request.headers.origin !== expectedOrigin ||
+          request.headers["sec-fetch-site"] === "cross-site")
+      ) {
+        error(
+          response,
+          403,
+          "forbidden",
+          "Project writes require a same-origin request",
+        );
         return;
       }
       const payload = write ? await body(request) : undefined;
-      if (payload === null) { error(response, 413, "payload_too_large", "Project requests must not exceed 64 KiB"); return; }
+      if (payload === null) {
+        error(
+          response,
+          413,
+          "payload_too_large",
+          "Project requests must not exceed 64 KiB",
+        );
+        return;
+      }
       const headers = new Headers();
-      const forwardedHeaders = config.backend === "serverful"
-        ? ["content-type", "accept", "authorization", "cookie"] : ["content-type", "accept"];
+      const forwardedHeaders =
+        config.backend === "serverful"
+          ? ["content-type", "accept", "authorization", "cookie"]
+          : ["content-type", "accept", "authorization"];
       for (const key of forwardedHeaders) {
         const value = request.headers[key];
         if (typeof value === "string") headers.set(key, value);
       }
-      if (config.backend === "serverless") headers.set("authorization", `Bearer ${config.ingestToken}`);
-      const upstream = await fetchApi(`${config.apiBaseUrl}${path}${url.search}`, {
-        method: request.method, headers, body: payload ? new Uint8Array(payload) : undefined,
-        redirect: "manual", signal: AbortSignal.timeout(30_000),
-      });
+      const upstream = await fetchApi(
+        `${config.apiBaseUrl}${path}${url.search}`,
+        {
+          method: request.method,
+          headers,
+          body: payload ? new Uint8Array(payload) : undefined,
+          redirect: "manual",
+          signal: AbortSignal.timeout(30_000),
+        },
+      );
       if (upstream.status >= 300 && upstream.status < 400) {
         await upstream.body?.cancel();
-        error(response, 502, "api_unavailable", "The API redirected; check the selected backend's API origin");
+        error(
+          response,
+          502,
+          "api_unavailable",
+          "The API redirected; check the selected backend's API origin",
+        );
         return;
       }
       const result = Buffer.from(await upstream.arrayBuffer());
@@ -101,7 +152,13 @@ export function createConsoleMiddleware(config: ServerConfig, fetchApi: typeof f
       }
       response.end(result);
     } catch {
-      if (!response.headersSent) error(response, 502, "api_unavailable", "The API is temporarily unavailable");
+      if (!response.headersSent)
+        error(
+          response,
+          502,
+          "api_unavailable",
+          "The API is temporarily unavailable",
+        );
       else response.end();
     }
   };

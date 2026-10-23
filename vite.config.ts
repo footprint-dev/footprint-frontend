@@ -11,7 +11,10 @@ function consoleApi(): Plugin {
   const configureServer = (server: Pick<ViteDevServer, "middlewares">) => {
     server.middlewares.use((request, response, next) => {
       const path = new URL(request.url || "/", "http://localhost").pathname;
-      if (path === "/api/console-config" || path === "/health") {
+      if (
+        path === "/health" ||
+        (config.backend === "serverless" && path === "/api/console-config")
+      ) {
         return middleware(request, response, next);
       }
       next();
@@ -28,10 +31,17 @@ function consoleApi(): Plugin {
 export default defineConfig({
   plugins: [consoleApi(), react()],
   resolve: {
-    alias: [{
-      find: /^@mapbox-rtl-text(?=\?|$)/,
-      replacement: fileURLToPath(new URL("../dist/mapbox-gl-rtl-text.js", import.meta.resolve("@mapbox/mapbox-gl-rtl-text"))),
-    }],
+    alias: [
+      {
+        find: /^@mapbox-rtl-text(?=\?|$)/,
+        replacement: fileURLToPath(
+          new URL(
+            "../dist/mapbox-gl-rtl-text.js",
+            import.meta.resolve("@mapbox/mapbox-gl-rtl-text"),
+          ),
+        ),
+      },
+    ],
   },
   server: {
     host: "127.0.0.1",
@@ -41,11 +51,11 @@ export default defineConfig({
       "/api": {
         target: config.apiBaseUrl,
         changeOrigin: true,
-        headers: config.backend === "serverless" ? { Authorization: `Bearer ${config.ingestToken}` } : undefined,
         configure(proxy) {
           if (config.backend !== "serverless") return;
-          proxy.on("proxyReq", request => {
-            for (const header of ["cookie", "token", "cf-access-jwt-assertion"]) request.removeHeader(header);
+          proxy.on("proxyReq", (request) => {
+            for (const header of ["cookie", "token", "cf-access-jwt-assertion"])
+              request.removeHeader(header);
           });
         },
       },
