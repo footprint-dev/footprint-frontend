@@ -109,34 +109,14 @@
   .timeline-header {
     gap: 5px;
   }
-  .timeline-month {
-    width: 123px;
-    flex-shrink: 0;
-  }
   .timeline-presets {
     gap: 2px;
   }
   .timeline-preset {
-    padding: 0 4px;
-  }
-  .timeline-selection {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-    margin: 0;
+    padding-inline: 4px;
   }
   .timeline-clear {
-    padding: 0 7px;
-  }
-  .timeline-tick b {
-    display: none;
-  }
-  .timeline-tick.tick-month b,
-  .timeline-tick.tick-middle b {
-    display: block;
+    padding-inline: 7px;
   }
   .map-tools {
     right: 16px;

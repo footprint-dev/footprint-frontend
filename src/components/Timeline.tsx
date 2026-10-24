@@ -1,6 +1,7 @@
 import { memo, useMemo, useRef, useState, type PointerEvent } from "react";
 import * as Slider from "@radix-ui/react-slider";
 import { Button } from "./ui";
+import { TimelineTicks } from "./TimelineTicks";
 import { count, type Filters, type LocationPoint } from "../lib/model";
 import {
   calendarDay,
@@ -456,35 +457,7 @@ export const Timeline = memo(function Timeline({
             </Slider.Thumb>
           </Slider.Root>
         </div>
-        <div className="timeline-ticks" aria-hidden="true">
-          {hasData &&
-            days
-              .filter(({ day }) => day >= minimum && day <= maximum)
-              .map(({ day }) => {
-                const date = dayDate(day),
-                  number = Number(date.slice(8)),
-                  fraction = (day - minimum) / span;
-                const monthStart = number === 1,
-                  major = monthStart || number % 5 === 0;
-                return (
-                  <span
-                    key={day}
-                    className={`timeline-tick ${major ? "tick-major" : ""} ${monthStart ? "tick-month" : ""} ${number === 15 ? "tick-middle" : ""}`}
-                    style={{ left: `${fraction * 100}%` }}
-                    data-boundary={
-                      fraction < 0.025
-                        ? "start"
-                        : fraction > 0.975
-                          ? "end"
-                          : undefined
-                    }
-                  >
-                    <i />
-                    {major && <b>{date.slice(5).replace("-", ".")}</b>}
-                  </span>
-                );
-              })}
-        </div>
+        <TimelineTicks minimum={minimum} maximum={maximum} hasData={hasData} />
       </div>
     </section>
   );
