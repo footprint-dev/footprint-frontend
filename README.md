@@ -120,15 +120,9 @@ tests/              前端逻辑和 HTTP 集成测试
 
 ## Release 与子路径部署
 
-GitHub Actions 仅由 `v*` 标签推送或 `workflow_dispatch` 手动操作触发, 执行 `pnpm check` 和打包. 对 `vX.Y.Z` 标签执行时, 检查通过才创建对应的 GitHub Release, 发布 `footprint-frontend.tar.gz`; 手动对分支执行时只检查和打包. CI 使用 Node.js 24 和 `package.json` 指定的 pnpm 版本.
+GitHub Actions 由 `v*` 标签推送或 `workflow_dispatch` 手动操作触发, 执行 `pnpm check` 和打包. 对 `vX.Y.Z` 标签执行时, 检查通过才将 `footprint-frontend.tar.gz` 上传到已有的同名 GitHub Release, 同名附件会被覆盖. workflow 不创建 Release; 手动对分支执行时只检查和打包. CI 使用 Node.js 24 和 `package.json` 指定的 pnpm 版本.
 
-首次发布前, 先提交并推送包含 workflow 的代码, 再推送版本标签:
-
-```bash
-git push origin main
-git tag v0.1.0
-git push origin v0.1.0
-```
+发布前先提交并推送代码, 再推送指向该提交的 `vX.Y.Z` 标签. 上传附件前需在 GitHub 准备好同名 Release. 构建由标签推送触发, 不监听 Release 事件.
 
 压缩包根目录包含 `dist/` 和 `LICENSE`. 网页资源都在 `dist/` 中, 许可证单独随包分发. 本地生成同格式产物:
 

@@ -1,4 +1,4 @@
-name: Build and release frontend
+name: Build frontend release assets
 
 on:
   push:
@@ -38,12 +38,11 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: frontend-release
-      - name: Publish GitHub Release
+      - name: Upload frontend asset to the existing Release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
-          gh release create "$RELEASE_TAG" footprint-frontend.tar.gz \
-            --verify-tag --generate-notes --title "$RELEASE_TAG"
+          gh release upload "$RELEASE_TAG" footprint-frontend.tar.gz --clobber
