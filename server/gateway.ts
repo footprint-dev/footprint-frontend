@@ -48,17 +48,11 @@ export function createConsoleMiddleware(
         json(response, 200, { status: "ok", name: "footprint-frontend" });
         return;
       }
-      if (config.backend === "serverless" && path === "/api/console-config") {
-        if (request.method !== "GET") {
-          response.setHeader("Allow", "GET");
-          error(response, 405, "method_not_allowed", "Use GET");
-          return;
-        }
-        json(response, 200, {
-          mapboxToken: config.mapboxPublicToken,
-          mapboxStyle: config.mapboxStyle,
-          localPreview: config.localPreview,
-        });
+      const localConfig =
+        config.backend === "serverless" && path === "/api/console-config";
+      if (localConfig && request.method !== "GET") {
+        response.setHeader("Allow", "GET");
+        error(response, 405, "method_not_allowed", "Use GET");
         return;
       }
       if (path !== "/api" && !path.startsWith("/api/")) {
@@ -120,7 +114,7 @@ export function createConsoleMiddleware(
         if (typeof value === "string") headers.set(key, value);
       }
       const upstream = await fetchApi(
-        `${config.apiBaseUrl}${path}${url.search}`,
+        `${config.apiBaseUrl}${localConfig ? "/api/me" : path}${url.search}`,
         {
           method: request.method,
           headers,
@@ -137,6 +131,24 @@ export function createConsoleMiddleware(
           "api_unavailable",
           "The API redirected; check the selected backend's API origin",
         );
+        return;
+      }
+      if (localConfig && upstream.ok) {
+        const identity = await upstream.json();
+        if (identity.authenticated !== true) {
+          error(
+            response,
+            401,
+            "unauthorized",
+            "API authentication is required",
+          );
+          return;
+        }
+        json(response, 200, {
+          mapboxToken: config.mapboxPublicToken,
+          mapboxStyle: config.mapboxStyle,
+          localPreview: config.localPreview,
+        });
         return;
       }
       const result = Buffer.from(await upstream.arrayBuffer());

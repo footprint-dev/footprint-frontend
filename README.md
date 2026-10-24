@@ -38,11 +38,11 @@ MAPBOX_PUBLIC_TOKEN=pk.你的Mapbox公开Token
 
 `API_BASE_URL` 默认以已部署的 Serverless API 公网地址举例, 请将 `https://your-footprint-api.workers.dev` 替换成实际 API Worker 的 origin, 不要填写 Console 域名或追加 `/api`. 切换到本地 Serverful 时, 将地址改为 `http://127.0.0.1:8080`, 并设置 `API_BACKEND=serverful`. 生产服务要求填写 `API_BASE_URL`.
 
-页面可直接打开. 点击右上角的设置按钮, 输入后端的 Token 并保存. Serverful 使用 Go 后端 `config.toml` 中的 `[server] ingest_token`, Serverless 使用 API Worker 的访问 Token. 保存前会调用 `/api/me` 校验, 成功后自动加载足迹数据. 页面未配置 Token 时不会请求业务数据.
+页面可直接打开. 点击右上角的设置按钮, 输入后端的 Token 并保存. Serverful 使用 Go 后端 `config.toml` 中的 `[server] ingest_token`, Serverless 使用 API Worker 的访问 Token. 保存前会调用 `/api/me` 校验, 成功后自动获取地图配置并加载足迹数据. 页面未配置 Token 时不会请求地图配置或业务数据; 清除 Token 时也会清除当前地图配置.
 
 Token 仅保存在当前浏览器标签页的 `sessionStorage`, 刷新页面后仍可使用, 关闭标签页后清除. 在设置中留空并保存也可清除 Token. 浏览器为轨迹读取和项目写入请求添加 `Authorization: Bearer <token>`, 代理将其转发给后端校验.
 
-Vite 的 `server.proxy` 将 `/api/*` 原样转发至所选后端. Serverless 模式的 `/api/console-config` 由前端服务读取 `MAPBOX_PUBLIC_TOKEN` 和 `MAPBOX_STYLE` 后返回. Serverful 模式将此请求转发给 Go, 前端的地图环境变量不生效; 请在后端 `config.toml` 中配置:
+Vite 的 `server.proxy` 将 `/api/*` 原样转发至所选后端. 地图配置请求携带用户输入的 Bearer Token. Serverless 模式先调用上游 `/api/me` 校验身份, 通过后由前端服务返回 `MAPBOX_PUBLIC_TOKEN` 和 `MAPBOX_STYLE`. Serverful 模式将此请求转发给 Go 校验并返回配置, 前端的地图环境变量不生效; 请在后端 `config.toml` 中配置:
 
 ```toml
 [mapbox]
@@ -86,19 +86,13 @@ pnpm start
 
 ## 后端接口
 
-浏览器使用 `./api/...` 相对地址. 下表展示服务端接收到的路径; 部署在 `/xxxx/` 时, 浏览器请求 `/xxxx/api/...`, 由反向代理移除前缀后转发.
-
-| 浏览器接口 | 行为 |
-| --- | --- |
-| `GET /api/console-config` | Serverless 由前端返回公开配置; Serverful 转发至 Go, 返回 `{ mapboxToken, mapboxStyle, localPreview }` |
-| `GET /api/me`, `GET /api/location` | 按原路径和查询参数转发至所选后端 |
-| `GET /api/locations` | 保留 `view`、`order`、`limit`、`offset` 等参数及 `locations`、`pagination` 响应 |
-| `GET /api/projects`、`GET /api/projects/:name` | 保留原项目查询接口 |
-| `POST /api/projects`、`PATCH /api/projects/:id` | 原样转发项目 JSON，保留 `201` / `200`、`project` 和错误响应 |
-
-两种模式都转发浏览器提供的 `Authorization`. Serverless 不转发 Cookie, 旧 `Token` 头或 Access JWT. Serverful 同时转发 Cookie 和后端的 `Set-Cookie`. 生产 Node 服务仅开放地图配置, 轨迹读取和项目管理, 位置上报由原客户端直接调用后端. 本机 Vite 开发和预览服务代理 `/api/*` 业务请求.
-
-业务数据的认证由后端负责, 页面和地图公开配置无需认证. 保留同源 `/api` 后, 后端无需增加浏览器 CORS 支持. 请将新控制台域名加入 Mapbox 公开 Token 的允许范围.
+| 浏览器接口                                      | 行为                                                                            |
+| ----------------------------------------------- | ------------------------------------------------------------------------------- |
+| `GET /api/console-config`                       | 认证后获取地图配置; Serverless 校验上游身份后返回, Serverful 转发至 Go          |
+| `GET /api/me`, `GET /api/location`              | 按原路径和查询参数转发至所选后端                                                |
+| `GET /api/locations`                            | 保留 `view`、`order`、`limit`、`offset` 等参数及 `locations`、`pagination` 响应 |
+| `GET /api/projects`、`GET /api/projects/:name`  | 保留原项目查询接口                                                              |
+| `POST /api/projects`、`PATCH /api/projects/:id` | 原样转发项目 JSON，保留 `201` / `200`、`project` 和错误响应                     |
 
 ## 检查
 
@@ -106,10 +100,16 @@ pnpm start
 pnpm check
 ```
 
+使用 `pnpm format` 格式化项目代码. Prettier 使用项目内的开发依赖版本, 跳过 `.gitignore` 中的文件及生成的 `pnpm-lock.yaml`.
+
 包含 TypeScript 检查, 地图/时间轴/时区/项目逻辑测试, 配置测试, HTTP 代理集成测试和生产构建. 代理测试通过本地 HTTP 上游验证浏览器 API 客户端的 Token 校验, 分页读取, 项目新增/修改, 凭据转发与错误响应, 不访问生产 CF 或真实轨迹数据.
 
 ```text
-src/                地图控制台
+src/App.tsx         页面组件组装
+src/components/     地图, 数据面板, 弹窗和基础界面组件
+src/hooks/          Token 与数据加载, 筛选及页面交互状态
+src/lib/            API 客户端, 数据模型和纯函数
+src/styles/         布局, 时间轴, 面板和响应式样式
 public/             公开静态资源
 server/config.ts    本项目的环境配置
 server/gateway.ts   运行时地图配置, 后端 API HTTP 代理
@@ -117,23 +117,6 @@ server/app.ts       生产静态资源服务
 server/start.ts     生产启动入口
 tests/              前端逻辑和 HTTP 集成测试
 ```
-
-## Release 与子路径部署
-
-GitHub Actions 由 `v*` 标签推送或 `workflow_dispatch` 手动操作触发, 执行 `pnpm check` 和打包. 对 `vX.Y.Z` 标签执行时, 检查通过才将 `footprint-frontend.tar.gz` 上传到已有的同名 GitHub Release, 同名附件会被覆盖. workflow 不创建 Release; 手动对分支执行时只检查和打包. CI 使用 Node.js 24 和 `package.json` 指定的 pnpm 版本.
-
-发布前先提交并推送代码, 再推送指向该提交的 `vX.Y.Z` 标签. 上传附件前需在 GitHub 准备好同名 Release. 构建由标签推送触发, 不监听 Release 事件.
-
-压缩包根目录包含 `dist/` 和 `LICENSE`. 网页资源都在 `dist/` 中, 许可证单独随包分发. 本地生成同格式产物:
-
-```bash
-pnpm check
-tar -czf footprint-frontend.tar.gz dist LICENSE
-```
-
-后端固定一个 Release 版本, 下载压缩包后只将 `dist/` 通过 Go embed 编译进服务. 不需要在后端构建时安装 Node.js 或获取前端源码.
-
-Vite 使用 `base: "./"`, 浏览器 API 请求也使用相对地址, 同一份产物可用于 `/` 或 `/xxxx/`. 子路径部署时, 代理应将 `/xxxx` 重定向到 `/xxxx/`, 并在转发页面, 静态资源和 API 请求时去掉 `/xxxx` 前缀. 不需要为部署前缀重新构建前端.
 
 ## 许可证
 

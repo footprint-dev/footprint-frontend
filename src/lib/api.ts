@@ -4,13 +4,13 @@ import type { ProjectInput } from "./project";
 async function get<T>(
   path: string,
   signal: AbortSignal | undefined,
-  token?: string,
+  token: string,
 ): Promise<T> {
   const response = await fetch(path, {
     signal,
     cache: "no-store",
     credentials: "same-origin",
-    headers: token ? { authorization: `Bearer ${token}` } : undefined,
+    headers: { authorization: `Bearer ${token}` },
   });
   if (!response.ok) {
     if (response.status === 401)
@@ -21,8 +21,8 @@ async function get<T>(
     throw new Error("API 返回了非 JSON 响应。");
   return response.json() as Promise<T>;
 }
-export const getConfig = (signal: AbortSignal) =>
-  get<ConsoleConfig>("./api/console-config", signal);
+export const getConfig = (signal: AbortSignal, token: string) =>
+  get<ConsoleConfig>("./api/console-config", signal, token);
 export const validateToken = (token: string) =>
   get<{ authenticated: boolean }>(
     "./api/me",

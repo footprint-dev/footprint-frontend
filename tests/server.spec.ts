@@ -11,7 +11,12 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createFrontendServer } from "../server/app.ts";
 import { loadConfig, type ServerConfig } from "../server/config.ts";
-import { getConfig, loadData, saveProject, validateToken } from "../src/api";
+import {
+  getConfig,
+  loadData,
+  saveProject,
+  validateToken,
+} from "../src/lib/api";
 
 const nativeFetch = globalThis.fetch;
 const servers: Server[] = [];
@@ -95,6 +100,11 @@ beforeEach(async () => {
         response.setHeader("Set-Cookie", "upstream-cookie=private");
         const url = new URL(request.url!, upstreamOrigin),
           offset = Number(url.searchParams.get("offset") || 0);
+        if (request.headers.authorization !== "Bearer upstream-secret") {
+          response.statusCode = 401;
+          response.end('{"error":{"code":"unauthorized"}}');
+          return;
+        }
         if (
           request.method === "GET" &&
           url.pathname === "/api/console-config"
@@ -106,11 +116,6 @@ beforeEach(async () => {
               localPreview: false,
             }),
           );
-          return;
-        }
-        if (request.headers.authorization !== "Bearer upstream-secret") {
-          response.statusCode = 401;
-          response.end('{"error":{"code":"unauthorized"}}');
           return;
         }
         if (url.pathname === "/api/locations") {
@@ -166,12 +171,7 @@ afterEach(async () => {
 describe("standalone console and CF API compatibility", () => {
   it("serves the console publicly while the backend authenticates business requests", async () => {
     const origin = await consoleServer();
-    for (const path of [
-      "/",
-      "/assets/index-hash.js",
-      "/api/console-config",
-      "/health",
-    ]) {
+    for (const path of ["/", "/assets/index-hash.js", "/health"]) {
       const response = await nativeFetch(origin + path);
       expect(response.status).toBe(200);
       expect(response.headers.get("www-authenticate")).toBeNull();
@@ -182,16 +182,45 @@ describe("standalone console and CF API compatibility", () => {
     expect(requests[0].headers.authorization).toBeUndefined();
   });
 
-  it("returns public runtime map configuration without exposing server secrets", async () => {
+  it("returns serverless map configuration only after upstream authentication", async () => {
     const origin = await consoleServer();
-    const response = await nativeFetch(origin + "/api/console-config");
+    for (const headers of [
+      undefined,
+      { authorization: "Bearer wrong-token" },
+    ]) {
+      const denied = await nativeFetch(origin + "/api/console-config", {
+        headers,
+      });
+      expect(denied.status).toBe(401);
+      expect(await denied.text()).not.toContain("pk.public");
+    }
+    const response = await nativeFetch(origin + "/api/console-config", {
+      headers: { authorization },
+    });
     expect(await response.json()).toEqual({
       mapboxToken: "pk.public",
       mapboxStyle: "mapbox://styles/mapbox/light-v11",
       localPreview: false,
     });
     expect(response.headers.get("cache-control")).toBe("no-store");
-    expect(requests).toEqual([]);
+    expect(requests.map((request) => request.url)).toEqual([
+      "/api/me",
+      "/api/me",
+      "/api/me",
+    ]);
+    expect(requests.at(-1)?.headers.authorization).toBe(authorization);
+  });
+
+  it("does not disclose serverless map settings when upstream reports an unauthenticated identity", async () => {
+    const origin = await consoleServer(
+      {},
+      { fetchApi: vi.fn(async () => Response.json({ authenticated: false })) },
+    );
+    const response = await nativeFetch(origin + "/api/console-config", {
+      headers: { authorization },
+    });
+    expect(response.status).toBe(401);
+    expect(await response.text()).not.toContain("pk.public");
   });
 
   it("loads serverful map configuration from the backend instead of the frontend environment", async () => {
@@ -204,7 +233,9 @@ describe("standalone console and CF API compatibility", () => {
       },
     });
     const origin = await listen(createFrontendServer(config, { dist }));
-    const response = await nativeFetch(origin + "/api/console-config");
+    const response = await nativeFetch(origin + "/api/console-config", {
+      headers: { authorization },
+    });
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
       mapboxToken: "pk.backend",
@@ -213,7 +244,7 @@ describe("standalone console and CF API compatibility", () => {
     });
     expect(requests).toHaveLength(1);
     expect(requests[0].url).toBe("/api/console-config");
-    expect(requests[0].headers.authorization).toBeUndefined();
+    expect(requests[0].headers.authorization).toBe(authorization);
   });
 
   it("preserves the CF path, query and browser Bearer token while filtering unrelated credentials", async () => {
@@ -318,7 +349,7 @@ describe("standalone console and CF API compatibility", () => {
       );
       const signal = new AbortController().signal,
         progress = vi.fn();
-      expect((await getConfig(signal)).mapboxToken).toBe("pk.public");
+      expect((await getConfig(signal, token)).mapboxToken).toBe("pk.public");
       await expect(validateToken("wrong-token")).rejects.toThrow("Token 无效");
       expect(await validateToken(token)).toEqual({
         authenticated: true,

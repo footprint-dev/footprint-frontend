@@ -1,8 +1,8 @@
 import { useRef, useState, type SubmitEvent } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { LoaderCircle, X } from "lucide-react";
-import { validateToken } from "./api";
-import { Button, IconButton } from "./components";
+import { validateToken } from "../lib/api";
+import { Button, IconButton } from "./ui";
 
 export function SettingsDialog({
   token,

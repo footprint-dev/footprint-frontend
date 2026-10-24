@@ -6,7 +6,7 @@ import "@fontsource-variable/noto-sans-sc";
 import "@fontsource-variable/geist-mono";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { App } from "./App";
-import "./style.css";
+import "./styles/index.css";
 
 // Keep one map instance in development too; StrictMode's remount would create
 // an additional billable map load on every initial development render.

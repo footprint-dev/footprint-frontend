@@ -1,10 +1,10 @@
 import { useRef, useState, type SubmitEvent } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { LoaderCircle, X } from "lucide-react";
-import { Button, IconButton } from "./components";
-import { saveProject } from "./api";
-import type { Project } from "./model";
-import { projectDraft, projectInput, type ProjectDraft } from "./project";
+import { Button, IconButton } from "./ui";
+import { saveProject } from "../lib/api";
+import type { Project } from "../lib/model";
+import { projectDraft, projectInput, type ProjectDraft } from "../lib/project";
 
 export function ProjectEditor({
   project,
