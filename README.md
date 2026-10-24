@@ -50,7 +50,7 @@ public_token = "pk.your-public-token"
 style = "mapbox://styles/mapbox/light-v11"
 ```
 
-`pnpm dev`, `pnpm preview` 和 `pnpm start` 均使用上述配置来源. 后续由 Go 嵌入静态前端时, 浏览器继续请求同源 `/api/console-config`, 地图配置仍在 Go 启动时加载.
+`pnpm dev`, `pnpm preview` 和 `pnpm start` 均使用上述配置来源. Go 嵌入静态前端时, 浏览器继续请求同源 `./api/console-config`, 地图配置在 Go 启动时加载.
 
 ```bash
 pnpm dev
@@ -86,6 +86,8 @@ pnpm start
 
 ## 后端接口
 
+浏览器使用 `./api/...` 相对地址. 下表展示服务端接收到的路径; 部署在 `/xxxx/` 时, 浏览器请求 `/xxxx/api/...`, 由反向代理移除前缀后转发.
+
 | 浏览器接口 | 行为 |
 | --- | --- |
 | `GET /api/console-config` | Serverless 由前端返回公开配置; Serverful 转发至 Go, 返回 `{ mapboxToken, mapboxStyle, localPreview }` |
@@ -115,6 +117,29 @@ server/app.ts       生产静态资源服务
 server/start.ts     生产启动入口
 tests/              前端逻辑和 HTTP 集成测试
 ```
+
+## Release 与子路径部署
+
+GitHub Actions 仅由 `v*` 标签推送或 `workflow_dispatch` 手动操作触发, 执行 `pnpm check` 和打包. 对 `vX.Y.Z` 标签执行时, 检查通过才创建对应的 GitHub Release, 发布 `footprint-frontend.tar.gz`; 手动对分支执行时只检查和打包. CI 使用 Node.js 24 和 `package.json` 指定的 pnpm 版本.
+
+首次发布前, 先提交并推送包含 workflow 的代码, 再推送版本标签:
+
+```bash
+git push origin main
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+压缩包根目录包含 `dist/` 和 `LICENSE`. 网页资源都在 `dist/` 中, 许可证单独随包分发. 本地生成同格式产物:
+
+```bash
+pnpm check
+tar -czf footprint-frontend.tar.gz dist LICENSE
+```
+
+后端固定一个 Release 版本, 下载压缩包后只将 `dist/` 通过 Go embed 编译进服务. 不需要在后端构建时安装 Node.js 或获取前端源码.
+
+Vite 使用 `base: "./"`, 浏览器 API 请求也使用相对地址, 同一份产物可用于 `/` 或 `/xxxx/`. 子路径部署时, 代理应将 `/xxxx` 重定向到 `/xxxx/`, 并在转发页面, 静态资源和 API 请求时去掉 `/xxxx` 前缀. 不需要为部署前缀重新构建前端.
 
 ## 许可证
 

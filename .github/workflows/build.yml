@@ -1,0 +1,49 @@
+name: Build and release frontend
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - uses: pnpm/action-setup@v6
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - name: Package frontend
+        run: tar -czf footprint-frontend.tar.gz dist LICENSE
+      - uses: actions/upload-artifact@v7
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          name: frontend-release
+          path: footprint-frontend.tar.gz
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: frontend-release
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          gh release create "$RELEASE_TAG" footprint-frontend.tar.gz \
+            --verify-tag --generate-notes --title "$RELEASE_TAG"

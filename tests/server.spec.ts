@@ -1,4 +1,9 @@
-import { createServer, type IncomingHttpHeaders, type Server } from "node:http";
+import {
+  createServer,
+  request as proxyRequest,
+  type IncomingHttpHeaders,
+  type Server,
+} from "node:http";
 import type { AddressInfo } from "node:net";
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -268,52 +273,82 @@ describe("standalone console and CF API compatibility", () => {
     ]);
   });
 
-  it("runs the existing browser API client against the HTTP gateway, including pagination and project writes", async () => {
-    const origin = await consoleServer();
-    vi.stubGlobal(
-      "fetch",
-      (input: string | URL | Request, init?: RequestInit) => {
-        const headers = new Headers(init?.headers);
-        if (init?.method === "POST" || init?.method === "PATCH")
-          headers.set("origin", origin);
-        return nativeFetch(new URL(String(input), origin), {
-          ...init,
-          headers,
-        });
-      },
-    );
-    const signal = new AbortController().signal,
-      progress = vi.fn();
-    expect((await getConfig(signal)).mapboxToken).toBe("pk.public");
-    await expect(validateToken("wrong-token")).rejects.toThrow("Token 无效");
-    expect(await validateToken(token)).toEqual({
-      authenticated: true,
-      method: "bearer",
-    });
-    const data = await loadData(signal, progress, token);
-    expect(data.locations).toEqual([point(1), point(2)]);
-    expect(data.projects).toEqual([
-      { id: 1, name: "旅程", startTime: 1000, endTime: 2000 },
-    ]);
-    expect(progress.mock.calls).toEqual([[1], [2]]);
-    const input = { name: "新的旅程", startTime: 1000, endTime: 2000 };
-    expect(await saveProject(input, token)).toEqual({ id: 42, ...input });
-    expect(
-      await saveProject({ ...input, name: "修改旅程" }, token, 42),
-    ).toEqual({ id: 42, ...input, name: "修改旅程" });
-    expect(
-      requests
-        .slice(-2)
-        .map((request) => [
-          request.method,
-          request.url,
-          JSON.parse(request.body),
-        ]),
-    ).toEqual([
-      ["POST", "/api/projects", input],
-      ["PATCH", "/api/projects/42", { ...input, name: "修改旅程" }],
-    ]);
-  });
+  it.each(["/", "/xxxx/"])(
+    "runs the browser API client under %s, including pagination and project writes",
+    async (basePath) => {
+      const frontendOrigin = await consoleServer();
+      const origin =
+        basePath === "/"
+          ? frontendOrigin
+          : await listen(
+              createServer((request, response) => {
+                if (!request.url?.startsWith(basePath)) {
+                  response.writeHead(404).end();
+                  return;
+                }
+                const upstream = proxyRequest(
+                  new URL(
+                    request.url.slice(basePath.length - 1),
+                    frontendOrigin,
+                  ),
+                  {
+                    method: request.method,
+                    headers: request.headers,
+                  },
+                  (incoming) => {
+                    response.writeHead(incoming.statusCode!, incoming.headers);
+                    incoming.pipe(response);
+                  },
+                );
+                upstream.on("error", () => response.writeHead(502).end());
+                request.pipe(upstream);
+              }),
+            );
+      vi.stubGlobal(
+        "fetch",
+        (input: string | URL | Request, init?: RequestInit) => {
+          const headers = new Headers(init?.headers);
+          if (init?.method === "POST" || init?.method === "PATCH")
+            headers.set("origin", origin);
+          return nativeFetch(new URL(String(input), origin + basePath), {
+            ...init,
+            headers,
+          });
+        },
+      );
+      const signal = new AbortController().signal,
+        progress = vi.fn();
+      expect((await getConfig(signal)).mapboxToken).toBe("pk.public");
+      await expect(validateToken("wrong-token")).rejects.toThrow("Token 无效");
+      expect(await validateToken(token)).toEqual({
+        authenticated: true,
+        method: "bearer",
+      });
+      const data = await loadData(signal, progress, token);
+      expect(data.locations).toEqual([point(1), point(2)]);
+      expect(data.projects).toEqual([
+        { id: 1, name: "旅程", startTime: 1000, endTime: 2000 },
+      ]);
+      expect(progress.mock.calls).toEqual([[1], [2]]);
+      const input = { name: "新的旅程", startTime: 1000, endTime: 2000 };
+      expect(await saveProject(input, token)).toEqual({ id: 42, ...input });
+      expect(
+        await saveProject({ ...input, name: "修改旅程" }, token, 42),
+      ).toEqual({ id: 42, ...input, name: "修改旅程" });
+      expect(
+        requests
+          .slice(-2)
+          .map((request) => [
+            request.method,
+            request.url,
+            JSON.parse(request.body),
+          ]),
+      ).toEqual([
+        ["POST", "/api/projects", input],
+        ["PATCH", "/api/projects/42", { ...input, name: "修改旅程" }],
+      ]);
+    },
+  );
 
   it("requires a matching public origin behind an HTTPS reverse proxy", async () => {
     const origin = await consoleServer({

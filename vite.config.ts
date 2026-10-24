@@ -29,6 +29,7 @@ function consoleApi(): Plugin {
 }
 
 export default defineConfig({
+  base: "./",
   plugins: [consoleApi(), react()],
   resolve: {
     alias: [

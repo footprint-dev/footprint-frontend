@@ -22,10 +22,10 @@ async function get<T>(
   return response.json() as Promise<T>;
 }
 export const getConfig = (signal: AbortSignal) =>
-  get<ConsoleConfig>("/api/console-config", signal);
+  get<ConsoleConfig>("./api/console-config", signal);
 export const validateToken = (token: string) =>
   get<{ authenticated: boolean }>(
-    "/api/me",
+    "./api/me",
     AbortSignal.timeout(15_000),
     token,
   );
@@ -36,7 +36,7 @@ export async function saveProject(
   id?: number,
 ): Promise<Project> {
   const response = await fetch(
-    id === undefined ? "/api/projects" : `/api/projects/${id}`,
+    id === undefined ? "./api/projects" : `./api/projects/${id}`,
     {
       method: id === undefined ? "POST" : "PATCH",
       credentials: "same-origin",
@@ -92,7 +92,7 @@ export async function loadData(
       locations: LocationPoint[];
       pagination: { hasMore: boolean };
     }>(
-      `/api/locations?view=raw&order=asc&limit=5000&offset=${offset}`,
+      `./api/locations?view=raw&order=asc&limit=5000&offset=${offset}`,
       signal,
       token,
     );
@@ -113,7 +113,7 @@ export async function loadData(
     const page = await get<{
       projects: Project[];
       pagination: { hasMore: boolean };
-    }>(`/api/projects?limit=500&offset=${offset}`, signal, token);
+    }>(`./api/projects?limit=500&offset=${offset}`, signal, token);
     if (!Array.isArray(page.projects) || !page.pagination)
       throw new Error("项目数据格式不正确。");
     projects.push(...page.projects);

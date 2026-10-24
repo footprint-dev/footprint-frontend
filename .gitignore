@@ -1,5 +1,6 @@
 node_modules/
 dist/
+footprint-frontend.tar.gz
 coverage/
 .env*
 !.env.example
