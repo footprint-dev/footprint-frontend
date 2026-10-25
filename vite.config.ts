@@ -1,6 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 import { loadConfig } from "./server/config.ts";
 import { createConsoleMiddleware } from "./server/gateway.ts";
 
@@ -30,7 +31,42 @@ function consoleApi(): Plugin {
 
 export default defineConfig({
   base: "./",
-  plugins: [consoleApi(), react()],
+  plugins: [
+    consoleApi(),
+    react(),
+    VitePWA({
+      registerType: "prompt",
+      scope: "./",
+      includeAssets: ["favicon.svg", "apple-touch-icon.png"],
+      manifest: {
+        id: "./",
+        name: "Footprint · 足迹图册",
+        short_name: "Footprint",
+        description: "在地图与坐标之间, 查看你的足迹.",
+        lang: "zh-CN",
+        start_url: "./",
+        scope: "./",
+        display: "standalone",
+        theme_color: "#ffffff",
+        background_color: "#ffffff",
+        icons: [
+          { src: "pwa-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "pwa-512x512.png", sizes: "512x512", type: "image/png" },
+          {
+            src: "pwa-maskable-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+        ],
+      },
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,woff2}"],
+        // API navigations must reach the server, including under a subpath.
+        navigateFallbackDenylist: [/\/api(?:[/?]|$)/, /\/health(?:\?|$)/],
+      },
+    }),
+  ],
   resolve: {
     alias: [
       {

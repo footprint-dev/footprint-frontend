@@ -1,5 +1,6 @@
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { RefreshCw, Settings } from "lucide-react";
+import { useRegisterSW } from "virtual:pwa-register/react";
 import { IconButton } from "./components/ui";
 import { MapView } from "./components/MapView";
 import { MapControls } from "./components/MapControls";
@@ -13,6 +14,10 @@ import { useFootprint } from "./hooks/useFootprint";
 
 export function App() {
   const footprint = useFootprint();
+  const {
+    needRefresh: [updateAvailable],
+    updateServiceWorker,
+  } = useRegisterSW();
   const tabPrefix = footprint.tableDialogOpen ? "dialog" : "drawer";
   return (
     <Tooltip.Provider delayDuration={250}>
@@ -59,10 +64,13 @@ export function App() {
             />
           </IconButton>
           <IconButton
-            label="设置"
+            label={updateAvailable ? "设置, 有新版本可用" : "设置"}
             onClick={(event) => footprint.openSettings(event.currentTarget)}
           >
-            <Settings size={18} />
+            <span className="settings-icon">
+              <Settings size={18} />
+              {updateAvailable && <span className="update-dot" />}
+            </span>
           </IconButton>
         </div>
         <MapControls
@@ -156,6 +164,8 @@ export function App() {
       {footprint.settingsOpen && (
         <SettingsDialog
           token={footprint.token}
+          updateAvailable={updateAvailable}
+          onUpdate={() => void updateServiceWorker(true)}
           onSave={footprint.saveToken}
           onClose={() => footprint.setSettingsOpen(false)}
           restoreFocus={() => footprint.settingsButton.current?.focus()}

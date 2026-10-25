@@ -6,11 +6,15 @@ import { Button, IconButton } from "./ui";
 
 export function SettingsDialog({
   token,
+  updateAvailable,
+  onUpdate,
   onSave,
   onClose,
   restoreFocus,
 }: {
   token: string;
+  updateAvailable: boolean;
+  onUpdate: () => void;
   onSave: (token: string) => void;
   onClose: () => void;
   restoreFocus: () => void;
@@ -106,6 +110,16 @@ export function SettingsDialog({
               </Button>
             </div>
           </form>
+          {updateAvailable && (
+            <div className="app-update">
+              <p className="helper" role="status">
+                有新版本可用, 更新会重新打开页面.
+              </p>
+              <Button disabled={busy} onClick={onUpdate}>
+                更新并重新打开
+              </Button>
+            </div>
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
