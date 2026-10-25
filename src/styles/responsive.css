@@ -12,9 +12,6 @@
   .map-summary {
     max-width: 280px;
   }
-  .table-order-note {
-    display: none;
-  }
   .point-table tr {
     grid-template-columns:
       66px 175px minmax(98px, 1fr) minmax(98px, 1fr)
@@ -206,9 +203,6 @@
   .raw-track-prefix {
     display: none;
   }
-  .project-toolbar {
-    gap: 6px;
-  }
   .project-toolbar .active-project {
     max-width: 64px;
   }
@@ -294,15 +288,6 @@
   .project-date-fields {
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
-  }
-  .search-input {
-    gap: 6px;
-  }
-  .search-input input {
-    font-size: 11px;
-  }
-  .search-input input::placeholder {
-    color: transparent;
   }
   .point-table thead {
     display: none;
@@ -502,36 +487,6 @@
   .mapboxgl-ctrl-bottom-right {
     right: 20px;
     max-width: calc(100% - 40px);
-  }
-}
-@media (max-width: 479px) {
-  .project-toolbar:has(.active-project) {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: 1fr 1fr;
-    column-gap: 8px;
-    row-gap: 0;
-    height: 76px;
-  }
-  .project-toolbar:has(.active-project) .search-input {
-    grid-column: 1;
-    grid-row: 1;
-  }
-  .project-toolbar:has(.active-project) .raw-track-toggle {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: end;
-  }
-  .project-toolbar:has(.active-project) .active-project {
-    grid-column: 1;
-    grid-row: 2;
-    justify-self: start;
-    max-width: 160px;
-  }
-  .project-toolbar:has(.active-project) .new-project {
-    grid-column: 2;
-    grid-row: 2;
-    justify-self: end;
   }
 }
 @media (max-width: 379px) {

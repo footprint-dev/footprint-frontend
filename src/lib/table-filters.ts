@@ -1,4 +1,28 @@
-import type { LocationPoint } from "./model";
+import type { LocationPoint, Project } from "./model";
+
+export interface ProjectTableFilters {
+  id?: number;
+  name?: string;
+}
+
+export const PROJECT_FILTER_FIELDS = [
+  { key: "id", label: "编号" },
+  { key: "name", label: "名称" },
+] as const;
+
+export type ProjectFilterField = (typeof PROJECT_FILTER_FIELDS)[number];
+
+export function filterTableProjects(
+  projects: Project[],
+  filters: ProjectTableFilters,
+) {
+  const name = filters.name?.trim().toLowerCase();
+  return projects.filter(
+    (project) =>
+      (filters.id === undefined || project.id === filters.id) &&
+      (!name || project.name.toLowerCase().includes(name)),
+  );
+}
 
 interface NumberRange {
   min?: number;
@@ -19,6 +43,40 @@ export const RANGE_FILTERS = [
   { key: "latitude", label: "纬度", unit: "°", min: -90, max: 90 },
   { key: "altitude", label: "海拔", unit: "m", min: -Infinity, max: Infinity },
 ] as const;
+
+export const TABLE_FILTER_FIELDS = [
+  { key: "city", label: "城市" },
+  { key: "device", label: "设备" },
+  { key: "id", label: "编号" },
+  ...RANGE_FILTERS,
+] as const;
+
+export type TableFilterField = (typeof TABLE_FILTER_FIELDS)[number];
+
+export function tableFilterSummary(
+  filters: PointTableFilters,
+  field: TableFilterField,
+): string | undefined {
+  if (field.key === "city" || field.key === "device") {
+    const value = filters[field.key];
+    return value === null
+      ? field.key === "city"
+        ? "未记录城市"
+        : "未知设备"
+      : value;
+  }
+  if (field.key === "id") return filters.id?.toString();
+  const range = filters[field.key];
+  if (!range || (range.min === undefined && range.max === undefined))
+    return undefined;
+  const value =
+    range.min === undefined
+      ? `<= ${range.max}`
+      : range.max === undefined
+        ? `>= ${range.min}`
+        : `${range.min} - ${range.max}`;
+  return `${value}${field.unit === "m" ? " m" : field.unit}`;
+}
 
 type RangeField = (typeof RANGE_FILTERS)[number]["key"];
 export type TableFilterErrors = Partial<Record<"id" | RangeField, string>>;

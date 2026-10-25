@@ -6,7 +6,9 @@ import { useMobileLayout } from "./useMobileLayout";
 import { observeMapOverlay } from "../lib/map-layout";
 import {
   filterTablePoints,
+  filterTableProjects,
   type PointTableFilters,
+  type ProjectTableFilters,
 } from "../lib/table-filters";
 import { aroundPointRange, drawableRange } from "../lib/timeline";
 import {
@@ -51,8 +53,8 @@ export function useFootprint() {
   const [autoFit, setAutoFit] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false),
     [tableDialogOpen, setTableDialogOpen] = useState(false);
-  const [tableTab, setTableTab] = useState<"points" | "projects">("points"),
-    [projectSearch, setProjectSearch] = useState("");
+  const [tableTab, setTableTab] = useState<"points" | "projects">("points");
+  const [projectFilters, setProjectFilters] = useState<ProjectTableFilters>({});
   const [projectEditor, setProjectEditor] = useState<{
     project?: Project;
     initialDraft: ProjectDraft;
@@ -167,19 +169,10 @@ export function useFootprint() {
       ),
     [projects, projectTimestamps],
   );
-  const tableProjects = useMemo(() => {
-    const query = projectSearch.trim().toLowerCase();
-    return query
-      ? projects.filter((project) =>
-          [
-            project.id,
-            project.name,
-            formatDate(project.startTime),
-            formatDate(project.endTime),
-          ].some((value) => String(value).toLowerCase().includes(query)),
-        )
-      : projects;
-  }, [projects, projectSearch]);
+  const tableProjects = useMemo(
+    () => filterTableProjects(projects, projectFilters),
+    [projects, projectFilters],
+  );
   const previewProject = (project: Project) => {
     map.current?.stop();
     setAutoFit(true);
@@ -235,7 +228,7 @@ export function useFootprint() {
       setAutoFit(true);
       setSelectedId(null);
     }
-    setProjectSearch("");
+    setProjectFilters({});
     setProjectEditor(null);
   };
   const indices = useMemo(
@@ -271,7 +264,7 @@ export function useFootprint() {
     map.current?.stop();
     setFilters({ ...EMPTY_FILTERS });
     setTableFilters({});
-    setProjectSearch("");
+    setProjectFilters({});
     setSelectedId(null);
     setShowLines(false);
     setShowPoints(true);
@@ -351,8 +344,8 @@ export function useFootprint() {
     viewAllTracks,
     tableFilters,
     setTableFilters,
-    projectSearch,
-    setProjectSearch,
+    projectFilters,
+    setProjectFilters,
     tablePoints,
     tableProjects,
     tableTab,

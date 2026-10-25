@@ -1,10 +1,59 @@
 import { describe, expect, it } from "vitest";
-import type { LocationPoint } from "../src/lib/model";
+import type { LocationPoint, Project } from "../src/lib/model";
 import {
   filterTablePoints,
+  filterTableProjects,
   parseTableFilters,
+  TABLE_FILTER_FIELDS,
   tableFilterDraft,
+  tableFilterSummary,
 } from "../src/lib/table-filters";
+
+describe("project table filtering", () => {
+  const projects: Project[] = [
+    {
+      id: 19,
+      name: "West Lake",
+      startTime: Date.UTC(2026, 9, 19),
+      endTime: Date.UTC(2026, 9, 20),
+    },
+    {
+      id: 119,
+      name: "West Hill",
+      startTime: Date.UTC(2026, 9, 19),
+      endTime: Date.UTC(2026, 9, 20),
+    },
+    {
+      id: 20,
+      name: "Route 19",
+      startTime: Date.UTC(2026, 9, 19),
+      endTime: Date.UTC(2026, 9, 20),
+    },
+  ];
+
+  it("keeps exact IDs and name keywords separate from each other and dates", () => {
+    expect(
+      filterTableProjects(projects, { id: 19 }).map((project) => project.id),
+    ).toEqual([19]);
+    expect(
+      filterTableProjects(projects, { name: "19" }).map(
+        (project) => project.id,
+      ),
+    ).toEqual([20]);
+    expect(filterTableProjects(projects, { name: "2026" })).toEqual([]);
+  });
+
+  it("requires the ID and name conditions to match together", () => {
+    expect(
+      filterTableProjects(projects, { id: 119, name: " west " }).map(
+        (project) => project.id,
+      ),
+    ).toEqual([119]);
+    expect(filterTableProjects(projects, { id: 119, name: "lake" })).toEqual(
+      [],
+    );
+  });
+});
 
 function point(id: number, values: Partial<LocationPoint> = {}): LocationPoint {
   return {
@@ -85,6 +134,36 @@ describe("point table filtering", () => {
         altitude: { min: -5.5, max: 0 },
       }).map((row) => row.id),
     ).toEqual([1, 2]);
+  });
+});
+
+describe("table filter summaries", () => {
+  it("shows units and one-sided bounds without rounding values", () => {
+    const filters = {
+      longitude: { min: 120.1234564 },
+      latitude: { max: 0 },
+      altitude: { min: -5.55, max: 0 },
+    };
+    expect(
+      TABLE_FILTER_FIELDS.map((field) =>
+        tableFilterSummary(filters, field),
+      ).filter((value) => value !== undefined),
+    ).toEqual([">= 120.1234564°", "<= 0°", "-5.55 - 0 m"]);
+  });
+
+  it("distinguishes missing categories from inactive filters", () => {
+    const filters = { city: null, device: null };
+    const fields = TABLE_FILTER_FIELDS.filter(
+      (field) => field.key === "city" || field.key === "device",
+    );
+    expect(fields.map((field) => tableFilterSummary({}, field))).toEqual([
+      undefined,
+      undefined,
+    ]);
+    expect(fields.map((field) => tableFilterSummary(filters, field))).toEqual([
+      "未记录城市",
+      "未知设备",
+    ]);
   });
 });
 

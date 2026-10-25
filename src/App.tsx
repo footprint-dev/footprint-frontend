@@ -129,8 +129,8 @@ export function App() {
             setTableFilters={footprint.setTableFilters}
             filterOptions={footprint.visible}
             mobile={footprint.mobile}
-            projectSearch={footprint.projectSearch}
-            setProjectSearch={footprint.setProjectSearch}
+            projectFilters={footprint.projectFilters}
+            setProjectFilters={footprint.setProjectFilters}
             filtered={footprint.filters.filtered}
             toggleOriginalTracks={footprint.toggleOriginalTracks}
             activeProject={footprint.activeProject}

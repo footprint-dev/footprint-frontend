@@ -1,12 +1,16 @@
 import type { RefObject } from "react";
 import type { OnChangeFn, SortingState } from "@tanstack/react-table";
-import { LoaderCircle, Plus, Search, X } from "lucide-react";
+import { LoaderCircle, Plus, X } from "lucide-react";
 import { Button } from "./ui";
 import { DataTable } from "./DataTable";
 import { ProjectTable } from "./ProjectTable";
 import { PointFilters } from "./PointFilters";
+import { ProjectFilters } from "./ProjectFilters";
 import { count, type LocationPoint, type Project } from "../lib/model";
-import type { PointTableFilters } from "../lib/table-filters";
+import type {
+  PointTableFilters,
+  ProjectTableFilters,
+} from "../lib/table-filters";
 
 interface Props {
   tableTab: "points" | "projects";
@@ -16,8 +20,8 @@ interface Props {
   setTableFilters: (filters: PointTableFilters) => void;
   filterOptions: LocationPoint[];
   mobile: boolean;
-  projectSearch: string;
-  setProjectSearch: (value: string) => void;
+  projectFilters: ProjectTableFilters;
+  setProjectFilters: (filters: ProjectTableFilters) => void;
   filtered: boolean;
   toggleOriginalTracks: () => void;
   activeProject?: Project;
@@ -47,8 +51,8 @@ export function DataPanel({
   setTableFilters,
   filterOptions,
   mobile,
-  projectSearch,
-  setProjectSearch,
+  projectFilters,
+  setProjectFilters,
   filtered,
   toggleOriginalTracks,
   activeProject,
@@ -90,14 +94,13 @@ export function DataPanel({
       aria-labelledby={`${tabPrefix}-${tableTab}-tab`}
     >
       {tableTab === "points" ? (
-        <div className="table-toolbar point-toolbar">
-          <PointFilters
-            points={filterOptions}
-            filters={tableFilters}
-            onChange={setTableFilters}
-            mobile={mobile}
-            focusRef={tableFocus}
-          />
+        <PointFilters
+          points={filterOptions}
+          filters={tableFilters}
+          onChange={setTableFilters}
+          mobile={mobile}
+          focusRef={tableFocus}
+        >
           {originalTracksButton}
           {activeProject && (
             <Button
@@ -110,31 +113,14 @@ export function DataPanel({
               <X size={12} />
             </Button>
           )}
-          <span className="table-order-note">点击编号定位 · 表头可排序</span>
-        </div>
+        </PointFilters>
       ) : (
-        <div className="table-toolbar project-toolbar">
-          <label className="search-input">
-            <Search size={15} />
-            <input
-              ref={(element) => {
-                tableFocus.current = element;
-              }}
-              aria-label="搜索项目"
-              placeholder="搜索项目名称或日期…"
-              value={projectSearch}
-              onChange={(e) => setProjectSearch(e.target.value)}
-            />
-            {projectSearch && (
-              <button
-                aria-label="清除项目搜索"
-                onClick={() => setProjectSearch("")}
-              >
-                <X size={14} />
-              </button>
-            )}
-          </label>
-          {originalTracksButton}
+        <ProjectFilters
+          filters={projectFilters}
+          onChange={setProjectFilters}
+          mobile={mobile}
+          focusRef={tableFocus}
+        >
           {activeProject && (
             <Button
               className="active-project"
@@ -146,7 +132,7 @@ export function DataPanel({
               <X size={12} />
             </Button>
           )}
-          <span className="table-order-note">按开始时间排序 · 北京时间</span>
+          {originalTracksButton}
           <Button
             className="new-project"
             disabled={!token || loading || !!error}
@@ -155,7 +141,7 @@ export function DataPanel({
             <Plus size={14} />
             新增项目
           </Button>
-        </div>
+        </ProjectFilters>
       )}
       {!token ? (
         <div className="data-state">
