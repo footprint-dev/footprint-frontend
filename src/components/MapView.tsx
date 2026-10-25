@@ -629,10 +629,17 @@ export const MapView = memo(
           pointData,
         );
     }, [ready, pointData, props.filteredMode]);
-    // setPadding uses jumpTo and stops active animations. Apply it before any
-    // initial fit so font/data loading order cannot cancel the first overview.
+    // setPadding stops active animations. Let point focus or range fitting finish
+    // before applying insets measured after the bottom panel changes size.
     useEffect(() => {
-      if (ready) map.current?.setPadding(padding());
+      const m = map.current;
+      if (!ready || !m) return;
+      const update = () => m.setPadding(padding());
+      if (m.isMoving()) m.once("moveend", update);
+      else update();
+      return () => {
+        m.off("moveend", update);
+      };
     }, [ready, props.bottomInset]);
     useEffect(() => {
       // Clearing filters or layers updates data while keeping the current camera.

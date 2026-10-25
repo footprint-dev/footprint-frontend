@@ -4,14 +4,18 @@ import { LoaderCircle, Plus, Search, X } from "lucide-react";
 import { Button } from "./ui";
 import { DataTable } from "./DataTable";
 import { ProjectTable } from "./ProjectTable";
+import { PointFilters } from "./PointFilters";
 import { count, type LocationPoint, type Project } from "../lib/model";
+import type { PointTableFilters } from "../lib/table-filters";
 
 interface Props {
   tableTab: "points" | "projects";
   tabPrefix: string;
-  tableSearch: RefObject<HTMLInputElement | null>;
-  search: string;
-  setSearch: (value: string) => void;
+  tableFocus: RefObject<HTMLElement | null>;
+  tableFilters: PointTableFilters;
+  setTableFilters: (filters: PointTableFilters) => void;
+  filterOptions: LocationPoint[];
+  mobile: boolean;
   projectSearch: string;
   setProjectSearch: (value: string) => void;
   filtered: boolean;
@@ -38,9 +42,11 @@ interface Props {
 export function DataPanel({
   tableTab,
   tabPrefix,
-  tableSearch,
-  search,
-  setSearch,
+  tableFocus,
+  tableFilters,
+  setTableFilters,
+  filterOptions,
+  mobile,
   projectSearch,
   setProjectSearch,
   filtered,
@@ -84,22 +90,14 @@ export function DataPanel({
       aria-labelledby={`${tabPrefix}-${tableTab}-tab`}
     >
       {tableTab === "points" ? (
-        <div className="table-toolbar">
-          <label className="search-input">
-            <Search size={15} />
-            <input
-              ref={tableSearch}
-              aria-label="搜索表格数据"
-              placeholder="搜索编号, 城市, 设备, 坐标或海拔..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
-              <button aria-label="清除搜索" onClick={() => setSearch("")}>
-                <X size={14} />
-              </button>
-            )}
-          </label>
+        <div className="table-toolbar point-toolbar">
+          <PointFilters
+            points={filterOptions}
+            filters={tableFilters}
+            onChange={setTableFilters}
+            mobile={mobile}
+            focusRef={tableFocus}
+          />
           {originalTracksButton}
           {activeProject && (
             <Button
@@ -119,7 +117,9 @@ export function DataPanel({
           <label className="search-input">
             <Search size={15} />
             <input
-              ref={tableSearch}
+              ref={(element) => {
+                tableFocus.current = element;
+              }}
               aria-label="搜索项目"
               placeholder="搜索项目名称或日期…"
               value={projectSearch}

@@ -24,7 +24,7 @@ export function App() {
           config={footprint.config}
           points={footprint.visible}
           selected={footprint.selected}
-          onSelect={footprint.setSelectedId}
+          onSelect={footprint.selectPoint}
           days={footprint.days}
           showPoints={footprint.showPoints}
           showLines={
@@ -35,7 +35,7 @@ export function App() {
           showPlaceNames={footprint.showPlaceNames}
           filteredMode={footprint.filteredMode}
           autoFit={footprint.autoFit}
-          bottomInset={footprint.drawerHeight + 24}
+          bottomInset={footprint.mapBottomInset}
         />
         <div className="range-control">
           <TimeRangePopover
@@ -81,12 +81,16 @@ export function App() {
           onShowBordersChange={footprint.setShowBorders}
           onShowPlaceNamesChange={footprint.setShowPlaceNames}
         />
-        {footprint.selected && (
+        {footprint.selected && footprint.pointCardVisible && (
           <PointCard
             selected={footprint.selected}
             selectedIndex={footprint.selectedIndex}
             total={footprint.visible.length}
             drawerHeight={footprint.drawerHeight}
+            mobile={footprint.mobile}
+            expanded={footprint.pointExpanded}
+            onExpandedChange={footprint.setPointExpanded}
+            onInsetChange={footprint.setPointInset}
             onClose={footprint.closePoint}
             onDrawAround={footprint.drawAroundPoint}
             onPrevious={() =>
@@ -112,7 +116,7 @@ export function App() {
               : footprint.tableProjects.length
           }
           drawerRef={footprint.drawerRef}
-          searchRef={footprint.tableSearch}
+          focusRef={footprint.tableFocus}
           onTabChange={footprint.selectTableTab}
           onToggle={footprint.toggleDrawer}
           onDialogOpenChange={footprint.setTableDialogOpen}
@@ -120,9 +124,11 @@ export function App() {
           <DataPanel
             tableTab={footprint.tableTab}
             tabPrefix={tabPrefix}
-            tableSearch={footprint.tableSearch}
-            search={footprint.search}
-            setSearch={footprint.setSearch}
+            tableFocus={footprint.tableFocus}
+            tableFilters={footprint.tableFilters}
+            setTableFilters={footprint.setTableFilters}
+            filterOptions={footprint.visible}
+            mobile={footprint.mobile}
             projectSearch={footprint.projectSearch}
             setProjectSearch={footprint.setProjectSearch}
             filtered={footprint.filters.filtered}
@@ -136,7 +142,7 @@ export function App() {
             reload={footprint.reload}
             tablePoints={footprint.tablePoints}
             selectedId={footprint.selectedId}
-            selectTablePoint={footprint.selectTablePoint}
+            selectTablePoint={footprint.selectPoint}
             tableSorting={footprint.tableSorting}
             setTableSorting={footprint.setTableSorting}
             tableProjects={footprint.tableProjects}
@@ -165,7 +171,7 @@ export function App() {
           restoreFocus={() => {
             if (footprint.editorFocus.current?.isConnected)
               footprint.editorFocus.current.focus();
-            else footprint.tableSearch.current?.focus();
+            else footprint.tableFocus.current?.focus();
           }}
         />
       )}

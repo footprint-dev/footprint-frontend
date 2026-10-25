@@ -1,18 +1,15 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import * as Switch from "@radix-ui/react-switch";
 
-export function Button({
-  className = "",
-  ...props
-}: ButtonHTMLAttributes<HTMLButtonElement>) {
+export function Button({ className = "", ...props }: ComponentProps<"button">) {
   return <button type="button" className={`button ${className}`} {...props} />;
 }
 export function IconButton({
   label,
   children,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & {
+}: ComponentProps<"button"> & {
   label: string;
   children: ReactNode;
 }) {

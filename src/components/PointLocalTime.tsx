@@ -1,7 +1,13 @@
 import { getPointLocalTime } from "../lib/local-time";
 import type { LocationPoint } from "../lib/model";
 
-export function PointLocalTime({ point }: { point: LocationPoint }) {
+export function PointLocalTime({
+  point,
+  compact = false,
+}: {
+  point: LocationPoint;
+  compact?: boolean;
+}) {
   const time = getPointLocalTime(point);
   if (!time)
     return (
@@ -11,7 +17,7 @@ export function PointLocalTime({ point }: { point: LocationPoint }) {
     );
   const recorded = time.timezone !== null;
   return (
-    <div className="point-local-time">
+    <div className={`point-local-time${compact ? " point-time-compact" : ""}`}>
       <time
         className="point-observed"
         dateTime={new Date(point.timestamp).toISOString()}
@@ -22,7 +28,7 @@ export function PointLocalTime({ point }: { point: LocationPoint }) {
         <span>{time.time}</span>
       </time>
       <p className="point-time-zone">
-        <span>{recorded ? "当地时间" : "UTC 时间"}</span>
+        {!compact && <span>{recorded ? "当地时间" : "UTC 时间"}</span>}
         <span>{time.offset}</span>
         {!recorded && <span>未记录时区</span>}
       </p>

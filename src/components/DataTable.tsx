@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -11,6 +11,7 @@ import {
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowDown, ArrowUp, ArrowUpDown, LocateFixed } from "lucide-react";
 import { formatDate, formatTime, type LocationPoint } from "../lib/model";
+import { useMobileLayout } from "../hooks/useMobileLayout";
 export const DataTable = memo(function DataTable({
   points,
   selectedId,
@@ -25,12 +26,7 @@ export const DataTable = memo(function DataTable({
   onSortingChange: OnChangeFn<SortingState>;
 }) {
   const scroll = useRef<HTMLDivElement>(null);
-  const [mobile, setMobile] = useState(window.innerWidth < 700);
-  useEffect(() => {
-    const resize = () => setMobile(window.innerWidth < 700);
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
-  }, []);
+  const mobile = useMobileLayout();
   const columns = useMemo<ColumnDef<LocationPoint>[]>(
     () => [
       {
@@ -207,7 +203,7 @@ export const DataTable = memo(function DataTable({
       </table>
       {!points.length && (
         <div className="table-empty">
-          暂无匹配的足迹，试试其他日期、项目或搜索词。
+          暂无匹配的足迹, 请调整日期, 项目或表格筛选条件.
         </div>
       )}
     </div>

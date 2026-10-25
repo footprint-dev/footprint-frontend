@@ -12,7 +12,7 @@ interface Props {
   tabPrefix: string;
   total: number;
   drawerRef: RefObject<HTMLDivElement | null>;
-  searchRef: RefObject<HTMLInputElement | null>;
+  focusRef: RefObject<HTMLElement | null>;
   onTabChange: (tab: "points" | "projects") => void;
   onToggle: () => void;
   onDialogOpenChange: (open: boolean) => void;
@@ -26,7 +26,7 @@ export function DataDrawer({
   tabPrefix,
   total,
   drawerRef,
-  searchRef,
+  focusRef,
   onTabChange,
   onToggle,
   onDialogOpenChange,
@@ -77,7 +77,7 @@ export function DataDrawer({
           aria-describedby={undefined}
           onOpenAutoFocus={(event) => {
             event.preventDefault();
-            searchRef.current?.focus();
+            focusRef.current?.focus();
           }}
         >
           <div className="drawer-header">

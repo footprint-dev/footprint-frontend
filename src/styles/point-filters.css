@@ -1,0 +1,128 @@
+.point-toolbar {
+  gap: 12px;
+}
+.point-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.point-filters > .point-category-filter {
+  flex-direction: row;
+  align-items: center;
+  margin: 0;
+  flex-shrink: 1;
+  min-width: 0;
+}
+.point-filters > .point-category-filter > span {
+  flex-shrink: 0;
+}
+.point-filters select {
+  width: 150px;
+  height: 30px;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+.point-filter-trigger {
+  flex-shrink: 0;
+  font-size: 12px;
+  min-height: 30px;
+  padding-inline: 8px;
+}
+.filter-count {
+  color: var(--orange-hover);
+  font-family: var(--mono);
+}
+.point-filters > .icon-button {
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  flex-shrink: 0;
+}
+.point-filter-popover {
+  z-index: 45;
+  width: min(400px, calc(100vw - 24px));
+  max-height: min(
+    640px,
+    calc(100dvh - 24px),
+    var(--radix-popover-content-available-height)
+  );
+  overflow-y: auto;
+}
+.point-filter-popover h3 {
+  font-size: 15px;
+  font-weight: 500;
+}
+.point-filter-hint {
+  color: var(--slate);
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+.point-range-filter {
+  border: 0;
+  padding: 0;
+  margin: 0 0 15px;
+  min-width: 0;
+}
+.point-range-filter legend {
+  color: var(--graphite);
+  font-size: 12px;
+  margin-bottom: 7px;
+}
+.point-range-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.point-range-inputs .field {
+  margin: 0;
+}
+.point-range-inputs .field > span {
+  color: var(--slate);
+  font-size: 11px;
+}
+.filter-error {
+  color: #b43b25;
+  font-size: 12px;
+  margin-top: 5px;
+}
+.point-filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.point-filter-actions > :first-child {
+  margin-right: auto;
+}
+.filter-apply {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: white;
+}
+.filter-apply:hover:not(:disabled) {
+  background: #424242;
+  color: white;
+}
+@media (min-width: 700px) and (max-width: 1100px) {
+  .point-toolbar {
+    gap: 8px;
+  }
+  .point-filters select {
+    width: 115px;
+  }
+}
+@media (max-width: 699px) {
+  .point-filters {
+    margin-right: auto;
+  }
+  .point-filter-popover {
+    padding: 12px;
+  }
+  .point-filter-popover input,
+  .point-filter-popover select {
+    font-size: 16px;
+  }
+}

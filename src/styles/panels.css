@@ -1,5 +1,7 @@
 .point-card {
   position: absolute;
+  bottom: calc(var(--drawer-height) + 100px);
+  max-height: calc(100dvh - var(--drawer-height) - 116px);
   right: 92px;
   width: 288px;
   background: white;
@@ -11,7 +13,13 @@
 .point-card-heading {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+}
+.point-card-identity {
+  min-width: 0;
+}
+.point-card-identity h3 {
+  overflow-wrap: anywhere;
 }
 .point-card-heading .icon-button {
   border: 0;

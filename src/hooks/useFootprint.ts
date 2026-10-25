@@ -2,6 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SortingState } from "@tanstack/react-table";
 import type { MapActions } from "../components/MapView";
 import { useFootprintData } from "./useFootprintData";
+import { useMobileLayout } from "./useMobileLayout";
+import { observeMapOverlay } from "../lib/map-layout";
+import {
+  filterTablePoints,
+  type PointTableFilters,
+} from "../lib/table-filters";
 import { aroundPointRange, drawableRange } from "../lib/timeline";
 import {
   projectDateTime,
@@ -19,6 +25,7 @@ import {
 
 export function useFootprint() {
   const data = useFootprintData();
+  const mobile = useMobileLayout();
   const {
     token,
     config,
@@ -34,7 +41,9 @@ export function useFootprint() {
   } = data;
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
-  const [search, setSearch] = useState("");
+  const [tableFilters, setTableFilters] = useState<PointTableFilters>({});
+  const [pointExpanded, setPointExpanded] = useState(false);
+  const [pointInset, setPointInset] = useState(0);
   const [showPoints, setShowPoints] = useState(true),
     [showLines, setShowLines] = useState(false);
   const [showBorders, setShowBorders] = useState(false);
@@ -52,9 +61,10 @@ export function useFootprint() {
     { id: "timestamp", desc: true },
   ]);
   const [drawerHeight, setDrawerHeight] = useState(58);
+  const [drawerInset, setDrawerInset] = useState(78);
   const map = useRef<MapActions>(null),
     drawerRef = useRef<HTMLDivElement>(null),
-    tableSearch = useRef<HTMLInputElement>(null);
+    tableFocus = useRef<HTMLElement>(null);
   const editorFocus = useRef<HTMLElement | null>(null);
   const settingsButton = useRef<HTMLButtonElement>(null);
   const openSettings = (button: HTMLButtonElement) => {
@@ -65,17 +75,23 @@ export function useFootprint() {
     data.saveToken(value);
     setSettingsOpen(false);
   };
-  const selectTablePoint = useCallback((id: number) => {
-    setSelectedId(id);
-    setTableDialogOpen(false);
-  }, []);
+  const selectPoint = useCallback(
+    (id: number) => {
+      setSelectedId(id);
+      setPointExpanded(false);
+      if (mobile) setDrawerOpen(false);
+      setTableDialogOpen(false);
+    },
+    [mobile, setSelectedId],
+  );
   useEffect(() => {
-    const observer = new ResizeObserver((entries) =>
-      setDrawerHeight(entries[0].contentRect.height),
-    );
-    if (drawerRef.current) observer.observe(drawerRef.current);
-    return () => observer.disconnect();
+    if (!drawerRef.current) return;
+    return observeMapOverlay(drawerRef.current, ({ height, bottomInset }) => {
+      setDrawerHeight(height);
+      setDrawerInset(bottomInset);
+    });
   }, []);
+  useEffect(() => setPointExpanded(false), [mobile]);
   const visible = useMemo(
     () => filterPoints(points, filters, projects),
     [points, filters, projects],
@@ -125,26 +141,10 @@ export function useFootprint() {
     preserveMapView();
     setFilters((current) => ({ ...current, filtered: !current.filtered }));
   };
-  const tablePoints = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return visible;
-    return visible.filter((p) =>
-      [
-        p.id,
-        p.city,
-        p.device,
-        formatDate(p.timestamp),
-        formatTime(p.timestamp),
-        p.longitude.toFixed(6),
-        p.latitude.toFixed(6),
-        p.altitude.toFixed(1),
-      ].some((value) =>
-        String(value ?? "")
-          .toLowerCase()
-          .includes(query),
-      ),
-    );
-  }, [visible, search]);
+  const tablePoints = useMemo(
+    () => filterTablePoints(visible, tableFilters),
+    [visible, tableFilters],
+  );
   const activeProject = projects.find(
     (project) => String(project.id) === filters.project,
   );
@@ -184,7 +184,7 @@ export function useFootprint() {
     map.current?.stop();
     setAutoFit(true);
     setFilters({ ...EMPTY_FILTERS, project: String(project.id) });
-    setSearch("");
+    setTableFilters({});
     setSelectedId(null);
     setShowPoints(true);
     setShowLines(true);
@@ -245,8 +245,15 @@ export function useFootprint() {
   const selectedIndex =
     selectedId === null ? -1 : (indices.get(selectedId) ?? -1);
   const selected = selectedIndex < 0 ? null : visible[selectedIndex];
+  const pointCardVisible =
+    !!selected && !(mobile && (drawerOpen || tableDialogOpen));
+  const mapBottomInset =
+    (mobile && pointCardVisible
+      ? Math.max(drawerInset, pointInset)
+      : drawerInset) + 4;
   const drawAroundPoint = () => {
     if (!selected) return;
+    setPointExpanded(false);
     setAutoFit(true);
     setFilters((current) => ({
       ...current,
@@ -263,7 +270,7 @@ export function useFootprint() {
   const viewAllTracks = () => {
     map.current?.stop();
     setFilters({ ...EMPTY_FILTERS });
-    setSearch("");
+    setTableFilters({});
     setProjectSearch("");
     setSelectedId(null);
     setShowLines(false);
@@ -342,8 +349,8 @@ export function useFootprint() {
     clearTimeRange,
     toggleOriginalTracks,
     viewAllTracks,
-    search,
-    setSearch,
+    tableFilters,
+    setTableFilters,
     projectSearch,
     setProjectSearch,
     tablePoints,
@@ -352,7 +359,7 @@ export function useFootprint() {
     selectTableTab,
     tableSorting,
     setTableSorting,
-    tableSearch,
+    tableFocus,
     activeProject,
     projectCounts,
     previewProject,
@@ -366,7 +373,13 @@ export function useFootprint() {
     selectedIndex,
     drawAroundPoint,
     closePoint,
-    selectTablePoint,
+    selectPoint,
+    mobile,
+    pointExpanded,
+    setPointExpanded,
+    pointCardVisible,
+    setPointInset,
+    mapBottomInset,
     drawerOpen,
     toggleDrawer,
     tableDialogOpen,
