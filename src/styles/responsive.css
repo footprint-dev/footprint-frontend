@@ -354,9 +354,6 @@
     font: 11px sans-serif;
     color: var(--ash);
   }
-  .point-table td[data-column="altitude"]::after {
-    content: " m";
-  }
   .point-table td[data-column="city"] {
     grid-column: 3;
     grid-row: 3;
@@ -416,9 +413,6 @@
   .point-stepper {
     margin-top: 10px;
     padding-top: 8px;
-  }
-  .point-card-meta {
-    margin-top: 10px;
   }
   .mapboxgl-ctrl-bottom-left {
     left: 9px;

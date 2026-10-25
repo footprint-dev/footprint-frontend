@@ -52,9 +52,12 @@ export function PointCard({
           <span>海拔</span>
           <strong>{selected.altitude.toFixed(1)} m</strong>
         </div>
-      </div>
-      <div className="point-card-meta">
-        <span>{selected.device || "未知设备"}</span>
+        <div>
+          <span>设备</span>
+          <strong title={selected.device || "未知设备"}>
+            {selected.device || "未知设备"}
+          </strong>
+        </div>
       </div>
       <Button
         className="point-context-button"

@@ -53,17 +53,17 @@ export const DataTable = memo(function DataTable({
       {
         accessorKey: "longitude",
         header: "经度",
-        cell: (info) => Number(info.getValue()).toFixed(6),
+        cell: (info) => `${Number(info.getValue()).toFixed(6)}°`,
       },
       {
         accessorKey: "latitude",
         header: "纬度",
-        cell: (info) => Number(info.getValue()).toFixed(6),
+        cell: (info) => `${Number(info.getValue()).toFixed(6)}°`,
       },
       {
         accessorKey: "altitude",
-        header: "海拔 (m)",
-        cell: (info) => Number(info.getValue()).toFixed(1),
+        header: "海拔",
+        cell: (info) => `${Number(info.getValue()).toFixed(1)} m`,
       },
       {
         accessorKey: "city",
