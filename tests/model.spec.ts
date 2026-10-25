@@ -19,6 +19,7 @@ function point(
     timestamp: time,
     longitude,
     latitude: 30,
+    altitude: 0,
     device,
     city: "杭州",
     quality: {

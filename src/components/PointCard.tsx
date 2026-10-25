@@ -48,6 +48,10 @@ export function PointCard({
           <span>纬度</span>
           <strong>{selected.latitude.toFixed(6)}°</strong>
         </div>
+        <div>
+          <span>海拔</span>
+          <strong>{selected.altitude.toFixed(1)} m</strong>
+        </div>
       </div>
       <div className="point-card-meta">
         <span>{selected.device || "未知设备"}</span>

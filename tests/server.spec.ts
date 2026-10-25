@@ -33,6 +33,7 @@ const point = (id: number) => ({
   id,
   longitude: 120 + id / 100,
   latitude: 30,
+  altitude: id === 1 ? 0 : -12.345,
   timestamp: 1_700_000_000_000 + id,
   city: "杭州",
   device: "phone",

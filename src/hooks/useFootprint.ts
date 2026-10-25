@@ -137,6 +137,7 @@ export function useFootprint() {
         formatTime(p.timestamp),
         p.longitude.toFixed(6),
         p.latitude.toFixed(6),
+        p.altitude.toFixed(1),
       ].some((value) =>
         String(value ?? "")
           .toLowerCase()

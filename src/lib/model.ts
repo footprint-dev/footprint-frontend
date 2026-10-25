@@ -6,6 +6,7 @@ export interface LocationPoint {
   id: number;
   longitude: number;
   latitude: number;
+  altitude: number;
   timestamp: number;
   device: string | null;
   city: string | null;

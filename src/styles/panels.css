@@ -48,8 +48,9 @@
   font-family: var(--mono);
 }
 .point-coordinates {
-  display: flex;
-  gap: 22px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 22px;
   border-top: 1px solid var(--line);
   margin-top: 16px;
   padding-top: 14px;
@@ -523,7 +524,7 @@
   display: grid;
   grid-template-columns:
     72px minmax(180px, 1.35fr) minmax(105px, 1fr) minmax(105px, 1fr)
-    minmax(64px, 0.6fr) minmax(116px, 1fr) 36px;
+    minmax(88px, 0.7fr) minmax(64px, 0.6fr) minmax(116px, 1fr) 36px;
   align-items: center;
   padding: 0 19px;
 }

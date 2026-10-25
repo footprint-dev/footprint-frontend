@@ -61,6 +61,11 @@ export const DataTable = memo(function DataTable({
         cell: (info) => Number(info.getValue()).toFixed(6),
       },
       {
+        accessorKey: "altitude",
+        header: "海拔 (m)",
+        cell: (info) => Number(info.getValue()).toFixed(1),
+      },
+      {
         accessorKey: "city",
         header: "城市",
         cell: (info) => info.getValue() || "—",
@@ -96,7 +101,7 @@ export const DataTable = memo(function DataTable({
   const virtual = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scroll.current,
-    estimateSize: () => (mobile ? 102 : 46),
+    estimateSize: () => (mobile ? 130 : 46),
     overscan: 8,
   });
   useEffect(() => {

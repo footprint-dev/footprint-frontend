@@ -90,7 +90,7 @@ export function DataPanel({
             <input
               ref={tableSearch}
               aria-label="搜索表格数据"
-              placeholder="搜索编号、城市、设备或坐标…"
+              placeholder="搜索编号, 城市, 设备, 坐标或海拔..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
