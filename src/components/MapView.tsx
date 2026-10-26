@@ -94,7 +94,7 @@ export const MapView = memo(
     const focusedName = props.selected
       ? props.selected.city?.trim() ||
         view.place ||
-        `位置点 ${props.selected.id}`
+        `位置点 #${props.selected.id}`
       : null;
     const placeName = focusedName || (view.zoom >= 9 ? view.place : null);
     const token = props.config?.mapboxToken,

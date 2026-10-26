@@ -15,6 +15,7 @@ interface FilterField {
   unit?: string;
   icon: LucideIcon;
   summary?: string;
+  monospace?: boolean;
 }
 
 export function FilterToolbar<Field extends FilterField>({
@@ -72,6 +73,7 @@ export function FilterToolbar<Field extends FilterField>({
   return (
     <div className={`table-toolbar filter-toolbar ${className}`}>
       <Button
+        size="compact"
         ref={(element) => {
           addButton.current = element;
           focusRef.current = element;
@@ -95,6 +97,7 @@ export function FilterToolbar<Field extends FilterField>({
             {active.map((field) => (
               <div className="point-filter-chip" key={field.key}>
                 <Button
+                  size="compact"
                   className="point-filter-chip-edit"
                   aria-label={`编辑${label}${field.label}筛选: ${field.summary}`}
                   aria-haspopup="dialog"
@@ -104,11 +107,14 @@ export function FilterToolbar<Field extends FilterField>({
                   onClick={(event) => open(field, event.currentTarget)}
                 >
                   <span className="point-filter-chip-label">{field.label}</span>
-                  <span className="point-filter-chip-value">
+                  <span
+                    className={`point-filter-chip-value${field.monospace ? " filter-monospace" : ""}`}
+                  >
                     {field.summary}
                   </span>
                 </Button>
                 <Button
+                  size="compact"
                   className="point-filter-chip-remove"
                   aria-label={`移除${label}${field.label}筛选`}
                   onClick={() => remove(field)}
@@ -119,6 +125,7 @@ export function FilterToolbar<Field extends FilterField>({
             ))}
           </div>
           <Button
+            size="compact"
             className="point-filter-clear"
             aria-label={`清空${label || "表格"}筛选`}
             onClick={() => {

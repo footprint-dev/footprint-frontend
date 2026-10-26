@@ -1,10 +1,15 @@
-import { useRef, useState, type SubmitEvent } from "react";
+import { useId, useRef, useState, type SubmitEvent } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { LoaderCircle, X } from "lucide-react";
 import { Button, IconButton } from "./ui";
 import { saveProject } from "../lib/api";
 import type { Project } from "../lib/model";
-import { projectDraft, projectInput, type ProjectDraft } from "../lib/project";
+import {
+  projectDraft,
+  projectInput,
+  ProjectInputError,
+  type ProjectDraft,
+} from "../lib/project";
 
 export function ProjectEditor({
   project,
@@ -24,21 +29,34 @@ export function ProjectEditor({
   const [draft, setDraft] = useState(() =>
     project ? projectDraft(project) : initialDraft,
   );
-  const [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<{
+    message: string;
+    field?: keyof ProjectDraft;
+  } | null>(null);
+  const errorId = useId();
   const nameInput = useRef<HTMLInputElement>(null);
   const submit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (busy) return;
-    setError("");
+    const form = event.currentTarget;
+    setError(null);
     try {
       const input = projectInput(draft, project);
       setBusy(true);
       onSaved(await saveProject(input, token, project?.id));
     } catch (error) {
-      setError(
-        error instanceof Error ? error.message : "项目保存失败，请稍后重试。",
-      );
+      const field =
+        error instanceof ProjectInputError ? error.field : undefined;
+      setError({
+        message:
+          error instanceof Error ? error.message : "项目保存失败, 请稍后重试.",
+        field,
+      });
+      if (field)
+        form
+          .querySelector<HTMLInputElement>(`[name="${field}"]`)
+          ?.focus({ preventScroll: true });
     } finally {
       setBusy(false);
     }
@@ -78,13 +96,18 @@ export function ProjectEditor({
           <Dialog.Description className="form-description">
             按起止时间归集足迹，可在地图中预览。
           </Dialog.Description>
-          <form onSubmit={submit} aria-busy={busy}>
+          <form noValidate onSubmit={submit} aria-busy={busy}>
             <fieldset disabled={busy}>
               <label className="field">
                 项目名称
                 <input
                   ref={nameInput}
+                  name="name"
                   aria-label="项目名称"
+                  aria-invalid={error?.field === "name"}
+                  aria-describedby={
+                    error?.field === "name" ? errorId : undefined
+                  }
                   required
                   maxLength={200}
                   placeholder="给这段旅程起个名字"
@@ -96,7 +119,12 @@ export function ProjectEditor({
                 <label className="field">
                   开始时间
                   <input
+                    name="start"
                     aria-label="开始时间"
+                    aria-invalid={error?.field === "start"}
+                    aria-describedby={
+                      error?.field === "start" ? errorId : undefined
+                    }
                     type="datetime-local"
                     required
                     step="1"
@@ -109,7 +137,12 @@ export function ProjectEditor({
                 <label className="field">
                   结束时间
                   <input
+                    name="end"
                     aria-label="结束时间"
+                    aria-invalid={error?.field === "end"}
+                    aria-describedby={
+                      error?.field === "end" ? errorId : undefined
+                    }
                     type="datetime-local"
                     required
                     step="1"
@@ -123,15 +156,15 @@ export function ProjectEditor({
             </fieldset>
             <p className="form-hint">北京时间 · UTC+8</p>
             {error && (
-              <p className="form-error" role="alert">
-                {error}
+              <p className="form-error" role="alert" id={errorId}>
+                {error.message}
               </p>
             )}
             <div className="form-dialog-actions">
               <Button disabled={busy} onClick={onClose}>
                 取消
               </Button>
-              <Button type="submit" disabled={busy} className="project-save">
+              <Button type="submit" disabled={busy} className="button-primary">
                 {busy && <LoaderCircle size={14} className="spinning" />}
                 {busy ? "保存中…" : "保存项目"}
               </Button>

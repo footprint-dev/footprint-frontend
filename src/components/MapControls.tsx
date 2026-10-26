@@ -1,8 +1,11 @@
+import { useState, type CSSProperties } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { Crosshair, Layers2, Minus, Plus } from "lucide-react";
 import { Button, IconButton, Toggle } from "./ui";
+import { overlayBoundary } from "../lib/map-layout";
 
 interface Props {
+  drawerInset: number;
   enabled: boolean;
   hasPoints: boolean;
   showPoints: boolean;
@@ -17,6 +20,7 @@ interface Props {
 }
 
 export function MapControls({
+  drawerInset,
   enabled,
   hasPoints,
   showPoints,
@@ -29,8 +33,14 @@ export function MapControls({
   onShowBordersChange,
   onShowPlaceNamesChange,
 }: Props) {
+  const [layerButton, setLayerButton] = useState<HTMLButtonElement | null>(
+    null,
+  );
   return (
-    <div className="map-tools">
+    <div
+      className="map-tools"
+      style={{ "--map-tools-bottom": `${drawerInset + 12}px` } as CSSProperties}
+    >
       <IconButton
         label="放大地图"
         disabled={!enabled}
@@ -55,7 +65,11 @@ export function MapControls({
       </IconButton>
       <Popover.Root>
         <Popover.Trigger asChild>
-          <Button className="icon-button" aria-label="地图图层">
+          <Button
+            ref={setLayerButton}
+            className="icon-button"
+            aria-label="地图图层"
+          >
             <Layers2 size={18} />
           </Button>
         </Popover.Trigger>
@@ -64,6 +78,8 @@ export function MapControls({
             className="popover layer-popover"
             side="left"
             sideOffset={10}
+            collisionBoundary={overlayBoundary(layerButton)}
+            collisionPadding={12}
             aria-label="地图图层"
           >
             <div className="popover-heading">地图图层</div>

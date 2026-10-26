@@ -378,6 +378,7 @@ export function useFootprint() {
     tableDialogOpen,
     setTableDialogOpen,
     drawerHeight,
+    drawerInset,
     drawerRef,
     map,
   };

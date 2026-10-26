@@ -45,6 +45,7 @@ export function PointFilters({
       fields={TABLE_FILTER_FIELDS.map((field) => ({
         ...field,
         icon: fieldIcons[field.key],
+        monospace: field.key !== "city",
         summary: tableFilterSummary(filters, field),
       }))}
       mobile={mobile}

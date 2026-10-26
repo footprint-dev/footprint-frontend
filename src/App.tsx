@@ -74,6 +74,7 @@ export function App() {
           </IconButton>
         </div>
         <MapControls
+          drawerInset={footprint.drawerInset}
           enabled={!!footprint.config?.mapboxToken}
           hasPoints={!!footprint.points.length}
           showPoints={footprint.showPoints}

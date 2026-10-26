@@ -1,3 +1,20 @@
+@media (max-width: 699px), (pointer: coarse) {
+  .field input,
+  .field select,
+  .timeline-month {
+    font-size: 16px;
+  }
+  .timeline-month,
+  .timeline-preset,
+  .timeline-clear {
+    height: 36px;
+    min-height: 36px;
+  }
+  .timeline-preset,
+  .timeline-clear {
+    font-size: 13px;
+  }
+}
 @media (max-width: 1100px) {
   .range-control {
     left: auto;
@@ -59,13 +76,12 @@
 }
 @media (max-width: 699px) {
   .atlas {
-    --mobile-bottom: calc(10px + env(safe-area-inset-bottom));
-    min-height: 0;
+    --mobile-bottom: 16px;
   }
   .map-summary {
     top: 20px;
     left: 18px;
-    max-width: calc(100vw - 92px);
+    max-width: calc(100% - 92px);
   }
   .summary-title {
     height: 40px;
@@ -133,22 +149,15 @@
     left: 10px;
     right: 10px;
     bottom: var(--mobile-bottom);
-    height: 39dvh;
-    min-height: 270px;
+    height: max(270px, 39dvh);
   }
   .drawer-collapsed .data-drawer {
     height: 54px;
-    min-height: 0;
   }
   .table-dialog {
-    width: calc(100vw - 20px);
-    height: calc(100dvh - 48px);
+    width: calc(var(--safe-area-width) - 20px);
+    height: calc(var(--safe-area-height) - 48px);
     min-height: 0;
-  }
-  .table-dialog-count {
-    padding-left: 8px;
-    margin-left: 2px;
-    font-size: 10px;
   }
   .drawer-header {
     height: 54px;
@@ -171,20 +180,10 @@
     gap: 0;
   }
   .table-tabs button {
-    height: 52px;
     padding: 0 10px;
     font-size: 12px;
   }
-  .drawer-identity .drawer-count,
-  .drawer-identity .table-dialog-count {
-    display: none;
-  }
-  .drawer-count {
-    padding-left: 8px;
-    margin-left: 2px;
-    font-size: 11px;
-  }
-  .drawer-count > span {
+  .drawer-identity .drawer-count {
     display: none;
   }
   .drawer-actions {
@@ -200,6 +199,9 @@
     padding: 0 12px;
     height: 43px;
   }
+  .table-scroll {
+    scroll-padding-top: 0;
+  }
   .raw-track-prefix {
     display: none;
   }
@@ -208,24 +210,21 @@
   }
   .active-project {
     max-width: 85px;
-    padding: 0 6px;
-    font-size: 10px;
   }
-  .new-project {
-    padding: 0 7px;
-    min-height: 28px;
-    font-size: 11px;
-    gap: 4px;
-  }
-  .project-table thead {
+  .project-table thead,
+  .point-table thead {
     display: none;
   }
-  .project-table tbody tr {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: 35px 50px 33px;
-    height: 130px;
-    gap: 0 10px;
+  .project-table tbody tr,
+  .point-table tbody tr {
+    column-gap: 12px;
     padding: 6px 12px;
+  }
+  .project-table tbody tr {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-rows: 32px 1fr;
+    height: 94px;
+    row-gap: 0;
   }
   .project-name {
     grid-column: 1;
@@ -234,52 +233,43 @@
   .project-name > span {
     display: none;
   }
-  .project-count {
+  .project-table .project-count {
     grid-column: 2;
     grid-row: 1;
     justify-self: end;
-    color: var(--ash) !important;
-    font-size: 11px !important;
+    color: var(--ash);
+    font-size: 11px;
   }
   .project-count::after {
     content: " 个位置点";
-    font-family: "Noto Sans SC Variable", sans-serif;
+    font-family: var(--sans);
   }
-  .project-start {
-    grid-column: 1;
+  .project-dates {
+    grid-column: 1 / -1;
     grid-row: 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
-  .project-end {
-    grid-column: 2;
-    grid-row: 2;
+  .project-start::before {
+    content: "起";
   }
-  .project-start > span::before {
-    content: "起 ";
-    color: var(--ash);
-    font:
-      10px "Noto Sans SC Variable",
-      sans-serif;
+  .project-end::before {
+    content: "止";
   }
-  .project-end > span::before {
-    content: "止 ";
-    color: var(--ash);
-    font:
-      10px "Noto Sans SC Variable",
-      sans-serif;
-  }
-  .project-start small,
-  .project-end small {
-    display: inline;
-    margin-left: 5px;
-    font-size: 9px;
+  .project-dates .table-date {
+    min-width: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 2px 8px;
   }
   .project-start,
   .project-end {
-    font-size: 10px !important;
+    display: flex;
+    align-items: baseline;
   }
   .project-actions {
-    grid-column: 1 / 3;
-    grid-row: 3;
+    grid-column: 3;
+    grid-row: 1;
     justify-self: end;
   }
   .form-dialog {
@@ -289,14 +279,9 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
   }
-  .point-table thead {
-    display: none;
-  }
   .point-table tbody tr {
-    grid-template-columns: 62px minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: 34px 28px 28px 28px;
-    column-gap: 12px;
-    padding: 6px 12px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: 32px repeat(3, 1fr);
     height: 130px;
     min-width: 0;
   }
@@ -305,7 +290,7 @@
     grid-row: 1;
   }
   .point-table td[data-column="timestamp"] {
-    grid-column: 2 / 4;
+    grid-column: 2 / -1;
     grid-row: 1;
   }
   .point-table td[data-column="longitude"] {
@@ -316,51 +301,62 @@
   .point-table td[data-column="latitude"]::before,
   .point-table td[data-column="altitude"]::before,
   .point-table td[data-column="device"]::before,
-  .point-table td[data-column="city"]::before {
-    font: 11px sans-serif;
+  .point-table td[data-column="city"]::before,
+  .project-start::before,
+  .project-end::before {
+    display: inline-block;
+    width: 2em;
+    /* Minimum font sizes can enlarge glyphs without expanding em widths. */
+    min-width: max-content;
+    flex-shrink: 0;
+    margin-right: 6px;
+    font: 11px/1.5 var(--sans);
     color: var(--ash);
   }
   .point-table td[data-column="longitude"]::before {
-    content: "经度 ";
+    content: "经度";
   }
   .point-table td[data-column="latitude"] {
     grid-column: 1 / 3;
     grid-row: 3;
   }
   .point-table td[data-column="latitude"]::before {
-    content: "纬度 ";
+    content: "纬度";
   }
   .point-table td[data-column="device"] {
-    grid-column: 3;
+    grid-column: 3 / -1;
     grid-row: 2;
   }
   .point-table td[data-column="device"]::before {
-    content: "设备 ";
+    content: "设备";
   }
   .point-table td[data-column="altitude"] {
     grid-column: 1 / 3;
     grid-row: 4;
   }
   .point-table td[data-column="altitude"]::before {
-    content: "海拔 ";
+    content: "海拔";
   }
   .point-table td[data-column="city"] {
-    grid-column: 3;
+    grid-column: 3 / -1;
     grid-row: 3;
   }
   .point-table td[data-column="city"]::before {
-    content: "城市 ";
+    content: "城市";
   }
   .point-table td[data-column="locate"] {
     display: none;
   }
-  .point-table td {
+  .point-table td,
+  .project-start,
+  .project-end {
     min-width: 0;
     font-size: 11px;
+    line-height: 1.5;
   }
-  .table-date {
+  .point-table .table-date {
     justify-content: flex-end;
-    gap: 12px;
+    gap: 8px;
   }
   .map-meta {
     left: 20px;
@@ -415,9 +411,9 @@
     white-space: nowrap;
   }
   .point-card-heading .icon-button {
-    width: 40px;
-    height: 40px;
-    min-height: 40px;
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
     flex-shrink: 0;
   }
   .point-time-compact {
@@ -502,8 +498,34 @@
   .range-control {
     left: 14px;
   }
-  .table-date {
-    gap: 8px;
+}
+@container atlas (max-height: 460px) {
+  .top-controls,
+  .map-tools {
+    flex-direction: row;
+  }
+  .map-tools {
+    top: auto;
+    bottom: var(--map-tools-bottom);
+  }
+  .tool-separator {
+    width: 1px;
+    height: 24px;
+    margin: 0 2px;
+  }
+  .north-button {
+    height: 36px;
+    padding: 0;
+  }
+  .north-button span {
+    display: none;
+  }
+}
+@media (max-width: 699px) {
+  @container atlas (max-height: 460px) {
+    .range-control {
+      top: 90px;
+    }
   }
 }
 @media (prefers-reduced-motion: reduce) {

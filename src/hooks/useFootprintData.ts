@@ -11,7 +11,7 @@ const tokenStorageKey = "footprint.ingest-token";
 
 export function useFootprintData() {
   const [token, setToken] = useState(
-    () => sessionStorage.getItem(tokenStorageKey) || "",
+    () => localStorage.getItem(tokenStorageKey) || "",
   );
   const [config, setConfig] = useState<ConsoleConfig | null>(null);
   const [points, setPoints] = useState<LocationPoint[]>([]);
@@ -23,8 +23,8 @@ export function useFootprintData() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const reload = () => setRevision((value) => value + 1);
   const saveToken = (value: string) => {
-    if (value) sessionStorage.setItem(tokenStorageKey, value);
-    else sessionStorage.removeItem(tokenStorageKey);
+    if (value) localStorage.setItem(tokenStorageKey, value);
+    else localStorage.removeItem(tokenStorageKey);
     if (value !== token) setConfig(null);
     setToken(value);
     reload();

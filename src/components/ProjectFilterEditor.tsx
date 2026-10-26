@@ -68,7 +68,7 @@ export function ProjectFilterEditor({
         )}
         <div className="point-filter-submit">
           <Button onClick={onClose}>取消</Button>
-          <Button type="submit" className="filter-apply">
+          <Button type="submit" className="button-primary">
             应用
           </Button>
         </div>

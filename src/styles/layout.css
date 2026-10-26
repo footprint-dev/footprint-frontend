@@ -1,11 +1,13 @@
 :root {
-  font-family:
+  --sans:
     "Noto Sans Variable", "Noto Sans Arabic Variable",
     "Noto Sans Hebrew Variable", "Noto Sans SC Variable", system-ui, sans-serif;
+  font-family: var(--sans);
   color: #262626;
-  background: #ffffff;
+  background: var(--vellum);
   font-synthesis: none;
   font-size: 15px;
+  touch-action: pan-x pan-y;
   --orange: #f6821f;
   --orange-hover: #e87316;
   --ink: #262626;
@@ -15,12 +17,28 @@
   --line: #e5e7eb;
   --vellum: #f9f9f9;
   --mono: "Geist Mono Variable", ui-monospace, monospace;
+  --safe-area-width: calc(
+    100vw - env(safe-area-inset-left) - env(safe-area-inset-right)
+  );
+  --safe-area-height: calc(
+    100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+  );
 }
 * {
   box-sizing: border-box;
 }
 body {
   margin: 0;
+  background: var(--vellum);
+}
+#root {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+  /* Safari extends the solid background of fixed elements into its toolbar. */
+  background: var(--vellum);
 }
 button,
 input,
@@ -62,9 +80,9 @@ svg {
   flex-shrink: 0;
 }
 .atlas {
+  container: atlas / size;
   position: relative;
-  height: 100dvh;
-  min-height: 600px;
+  height: 100%;
   overflow: hidden;
 }
 .map-stage,
@@ -219,9 +237,16 @@ svg {
     color 0.15s,
     border-color 0.15s;
 }
-.button:hover:not(:disabled) {
+/* Semantic states take precedence over the default hover treatment. */
+.button:where(:hover:not(:disabled)) {
   background: var(--vellum);
   color: var(--ink);
+}
+.button-compact {
+  min-height: 28px;
+  padding-inline: 8px;
+  gap: 4px;
+  font-size: 11px;
 }
 .button-primary {
   background: var(--orange);
@@ -406,6 +431,7 @@ svg {
 .field {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: 7px;
   font-size: 12px;
   color: var(--graphite);
@@ -415,6 +441,7 @@ svg {
 .field select {
   min-width: 0;
   width: 100%;
+  max-width: 100%;
   height: 38px;
   border: 1px solid var(--line);
   border-radius: 4px;
@@ -422,6 +449,13 @@ svg {
   padding: 0 9px;
   font-size: 13px;
   color: var(--ink);
+}
+.field input[type="datetime-local"] {
+  /* Keep iOS native control sizing from overriding the field's box. */
+  appearance: none;
+}
+.field input[aria-invalid="true"] {
+  border-color: #b43b25;
 }
 .toggle-label {
   display: flex;

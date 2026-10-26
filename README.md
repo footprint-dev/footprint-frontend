@@ -40,7 +40,7 @@ MAPBOX_PUBLIC_TOKEN=pk.你的Mapbox公开Token
 
 页面可直接打开. 点击右上角的设置按钮, 输入后端的 Token 并保存. Serverful 使用 Go 后端 `config.toml` 中的 `[server] ingest_token`, Serverless 使用 API Worker 的访问 Token. 保存前会调用 `/api/me` 校验, 成功后自动获取地图配置并加载足迹数据. 页面未配置 Token 时不会请求地图配置或业务数据; 清除 Token 时也会清除当前地图配置.
 
-Token 仅保存在当前浏览器标签页的 `sessionStorage`, 刷新页面后仍可使用, 关闭标签页后清除. 在设置中留空并保存也可清除 Token. 浏览器为轨迹读取和项目写入请求添加 `Authorization: Bearer <token>`, 代理将其转发给后端校验.
+Token 保存在当前浏览器的 `localStorage`, 刷新或关闭页面后仍保留, 前端不设置固定有效期. 在设置中留空并保存, 或清除此站点的浏览器数据, 可清除 Token. 浏览器为轨迹读取和项目写入请求添加 `Authorization: Bearer <token>`, 代理将其转发给后端校验.
 
 Vite 的 `server.proxy` 将 `/api/*` 原样转发至所选后端. 地图配置请求携带用户输入的 Bearer Token. Serverless 模式先调用上游 `/api/me` 校验身份, 通过后由前端服务返回 `MAPBOX_PUBLIC_TOKEN` 和 `MAPBOX_STYLE`. Serverful 模式将此请求转发给 Go 校验并返回配置, 前端的地图环境变量不生效; 请在后端 `config.toml` 中配置:
 
@@ -112,7 +112,7 @@ pnpm check
 
 使用 `pnpm format` 格式化项目代码. Prettier 使用项目内的开发依赖版本, 跳过 `.gitignore` 中的文件及生成的 `pnpm-lock.yaml`.
 
-包含 TypeScript 检查, 地图/时间轴/时区/项目逻辑测试, 配置测试, HTTP 代理集成测试和生产构建. 代理测试通过本地 HTTP 上游验证浏览器 API 客户端的 Token 校验, 分页读取, 项目新增/修改, 凭据转发与错误响应, 不访问生产 CF 或真实轨迹数据.
+包含 TypeScript 检查, 地图/时间轴/时区/项目逻辑测试, 弹层布局/焦点及表单校验测试, 配置测试, HTTP 代理集成测试和生产构建. 代理测试通过本地 HTTP 上游验证浏览器 API 客户端的 Token 校验, 分页读取, 项目新增/修改, 凭据转发与错误响应, 不访问生产 CF 或真实轨迹数据.
 
 ```text
 src/App.tsx         页面组件组装

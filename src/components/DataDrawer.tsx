@@ -40,6 +40,12 @@ export function DataDrawer({
     />
   );
   const unit = tableTab === "points" ? "条记录" : "个项目";
+  const recordCount = (
+    <span className="drawer-count">
+      <span>{count(total)}</span>
+      <span className="drawer-count-unit">{unit}</span>
+    </span>
+  );
   return (
     <Dialog.Root open={dialogOpen} onOpenChange={onDialogOpenChange}>
       <section className="data-drawer" ref={drawerRef} aria-label="轨迹数据表">
@@ -49,9 +55,7 @@ export function DataDrawer({
             <Table2 size={17} />
             <h2>足迹数据</h2>
             {!dialogOpen && tabs}
-            <span className="drawer-count">
-              {count(total)} <span>{unit}</span>
-            </span>
+            {recordCount}
           </div>
           <div className="drawer-actions">
             <Dialog.Trigger asChild>
@@ -85,9 +89,7 @@ export function DataDrawer({
               <Table2 size={17} />
               <Dialog.Title>足迹数据</Dialog.Title>
               {tabs}
-              <span className="table-dialog-count">
-                {count(total)} {unit}
-              </span>
+              {recordCount}
             </div>
             <Dialog.Close asChild>
               <IconButton label="关闭表格弹窗">

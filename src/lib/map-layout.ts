@@ -1,3 +1,7 @@
+export function overlayBoundary(anchor: Element | null) {
+  return anchor?.ownerDocument.querySelector(".atlas") ?? null;
+}
+
 export function observeMapOverlay(
   overlay: HTMLElement,
   onMeasure: (size: { height: number; bottomInset: number }) => void,

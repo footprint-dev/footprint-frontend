@@ -2,8 +2,18 @@ import type { ComponentProps, ReactNode } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import * as Switch from "@radix-ui/react-switch";
 
-export function Button({ className = "", ...props }: ComponentProps<"button">) {
-  return <button type="button" className={`button ${className}`} {...props} />;
+export function Button({
+  size = "default",
+  className = "",
+  ...props
+}: ComponentProps<"button"> & { size?: "default" | "compact" }) {
+  return (
+    <button
+      type="button"
+      className={`button ${size === "compact" ? "button-compact " : ""}${className}`}
+      {...props}
+    />
+  );
 }
 export function IconButton({
   label,

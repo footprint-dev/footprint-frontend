@@ -1,4 +1,4 @@
-import { useRef, useState, type SubmitEvent } from "react";
+import { useId, useRef, useState, type SubmitEvent } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { LoaderCircle, X } from "lucide-react";
 import { validateToken } from "../lib/api";
@@ -23,6 +23,7 @@ export function SettingsDialog({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const tokenInput = useRef<HTMLInputElement>(null);
+  const errorId = useId();
   const submit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (busy) return;
@@ -82,6 +83,8 @@ export function SettingsDialog({
                 Token
                 <input
                   ref={tokenInput}
+                  aria-invalid={!!error}
+                  aria-describedby={error ? errorId : undefined}
                   type="password"
                   autoComplete="off"
                   autoCapitalize="none"
@@ -92,11 +95,8 @@ export function SettingsDialog({
                 />
               </label>
             </fieldset>
-            <p className="form-hint">
-              仅保存在当前标签页. 留空并保存可清除 Token.
-            </p>
             {error && (
-              <p className="form-error" role="alert">
+              <p className="form-error" role="alert" id={errorId}>
                 {error}
               </p>
             )}

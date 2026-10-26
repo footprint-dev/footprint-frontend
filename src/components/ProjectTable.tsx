@@ -2,7 +2,8 @@ import { memo, useEffect, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Pencil } from "lucide-react";
 import { Button } from "./ui";
-import { count, formatDate, formatTime, type Project } from "../lib/model";
+import { TableDateTime } from "./TableDateTime";
+import { count, type Project } from "../lib/model";
 
 export const ProjectTable = memo(function ProjectTable({
   projects,
@@ -27,7 +28,7 @@ export const ProjectTable = memo(function ProjectTable({
   const virtual = useVirtualizer({
     count: projects.length,
     getScrollElement: () => scroll.current,
-    estimateSize: () => (mobile ? 130 : 62),
+    estimateSize: () => (mobile ? 94 : 62),
     overscan: 5,
     getItemKey: (index) => projects[index].id,
   });
@@ -82,19 +83,20 @@ export const ProjectTable = memo(function ProjectTable({
                     {selected && <em>正在预览</em>}
                   </span>
                 </td>
-                <td className="project-start">
-                  <span>{formatDate(project.startTime)}</span>
-                  <small>{formatTime(project.startTime)}</small>
-                </td>
-                <td className="project-end">
-                  <span>{formatDate(project.endTime)}</span>
-                  <small>{formatTime(project.endTime)}</small>
+                <td className="project-dates" colSpan={2}>
+                  <div className="project-start">
+                    <TableDateTime timestamp={project.startTime} />
+                  </div>
+                  <div className="project-end">
+                    <TableDateTime timestamp={project.endTime} />
+                  </div>
                 </td>
                 <td className="project-count">
                   {count(counts.get(project.id) ?? 0)}
                 </td>
                 <td className="project-actions">
                   <Button
+                    size="compact"
                     aria-label={`编辑项目 ${project.name}`}
                     onClick={(event) => {
                       event.stopPropagation();

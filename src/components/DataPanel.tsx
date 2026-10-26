@@ -73,17 +73,32 @@ export function DataPanel({
   previewProject,
   openProjectEditor,
 }: Props) {
-  const originalTracksButton = (
-    <Button
-      className="raw-track-toggle"
-      aria-label="显示原始轨迹"
-      aria-pressed={!filtered}
-      onClick={toggleOriginalTracks}
-    >
-      <span>
-        <span className="raw-track-prefix">显示</span>原始轨迹
-      </span>
-    </Button>
+  const trackActions = (
+    <>
+      <Button
+        size="compact"
+        className="raw-track-toggle"
+        aria-label="显示原始轨迹"
+        aria-pressed={!filtered}
+        onClick={toggleOriginalTracks}
+      >
+        <span>
+          <span className="raw-track-prefix">显示</span>原始轨迹
+        </span>
+      </Button>
+      {activeProject && (
+        <Button
+          size="compact"
+          className="active-project"
+          aria-label="清除项目筛选"
+          title={activeProject.name}
+          onClick={clearProject}
+        >
+          <span>{activeProject.name}</span>
+          <X size={12} />
+        </Button>
+      )}
+    </>
   );
 
   return (
@@ -101,18 +116,7 @@ export function DataPanel({
           mobile={mobile}
           focusRef={tableFocus}
         >
-          {originalTracksButton}
-          {activeProject && (
-            <Button
-              className="active-project"
-              aria-label="清除项目筛选"
-              title={activeProject.name}
-              onClick={clearProject}
-            >
-              <span>{activeProject.name}</span>
-              <X size={12} />
-            </Button>
-          )}
+          {trackActions}
         </PointFilters>
       ) : (
         <ProjectFilters
@@ -121,19 +125,9 @@ export function DataPanel({
           mobile={mobile}
           focusRef={tableFocus}
         >
-          {activeProject && (
-            <Button
-              className="active-project"
-              aria-label="清除项目筛选"
-              title={activeProject.name}
-              onClick={clearProject}
-            >
-              <span>{activeProject.name}</span>
-              <X size={12} />
-            </Button>
-          )}
-          {originalTracksButton}
+          {trackActions}
           <Button
+            size="compact"
             className="new-project"
             disabled={!token || loading || !!error}
             onClick={() => openProjectEditor()}

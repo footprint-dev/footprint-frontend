@@ -25,6 +25,7 @@ export function ProjectFilters({
       fields={PROJECT_FILTER_FIELDS.map((field) => ({
         ...field,
         icon: field.key === "id" ? Hash : Type,
+        monospace: field.key === "id",
         summary: filters[field.key]?.toString(),
       }))}
       label="项目"

@@ -3,6 +3,7 @@ import {
   projectDateTime,
   projectDraft,
   projectInput,
+  ProjectInputError,
   projectPointCount,
 } from "../src/lib/project";
 
@@ -52,17 +53,21 @@ describe("project time windows", () => {
     });
   });
   it.each([
-    { name: " " },
-    { name: "x".repeat(201) },
-    { start: "" },
-    { start: "2026-02-30T12:00" },
-    { end: "2026-10-03T24:00" },
-    { end: "2026-09-01T00:00" },
-  ])("rejects invalid drafts: %j", (changes) => {
-    expect(() =>
-      projectInput({ ...projectDraft(original), ...changes }),
-    ).toThrow();
-  });
+    [{ name: " " }, "name"],
+    [{ name: "x".repeat(201) }, "name"],
+    [{ start: "" }, "start"],
+    [{ start: "2026-02-30T12:00" }, "start"],
+    [{ end: "2026-10-03T24:00" }, "end"],
+    [{ end: "2026-09-01T00:00" }, "end"],
+  ] as const)(
+    "rejects invalid drafts and identifies the field: %j",
+    (changes, field) => {
+      const validate = () =>
+        projectInput({ ...projectDraft(original), ...changes });
+      expect(validate).toThrow(ProjectInputError);
+      expect(validate).toThrow(expect.objectContaining({ field }));
+    },
+  );
   it("counts inclusive windows with repeated timestamps without counting gaps", () => {
     const times = [1000, 2000, 2000, 3000, 5000];
     expect(

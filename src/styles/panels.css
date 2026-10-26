@@ -1,7 +1,7 @@
 .point-card {
   position: absolute;
   bottom: calc(var(--drawer-height) + 100px);
-  max-height: calc(100dvh - var(--drawer-height) - 116px);
+  max-height: calc(var(--safe-area-height) - var(--drawer-height) - 116px);
   right: 92px;
   width: 288px;
   background: white;
@@ -115,6 +115,7 @@
   right: 24px;
   bottom: 20px;
   height: clamp(300px, 35vh, 390px);
+  max-height: calc(100% - 200px);
   background: white;
   border: 1px solid var(--line);
   border-top: 2px solid var(--ink);
@@ -126,6 +127,9 @@
 .drawer-collapsed .data-drawer {
   height: 58px;
 }
+.drawer-collapsed .data-drawer .drawer-header {
+  height: 100%;
+}
 .table-dialog-open .data-drawer {
   visibility: hidden;
 }
@@ -135,14 +139,17 @@
   z-index: 40;
   background: #26262645;
 }
+.table-dialog,
+.form-dialog {
+  left: calc(env(safe-area-inset-left) + var(--safe-area-width) / 2);
+  top: calc(env(safe-area-inset-top) + var(--safe-area-height) / 2);
+}
 .table-dialog {
   position: fixed;
-  left: 50%;
-  top: 50%;
   transform: translate(-50%, -50%);
   z-index: 41;
-  width: min(1120px, calc(100vw - 64px));
-  height: min(680px, calc(100dvh - 96px));
+  width: min(1120px, calc(var(--safe-area-width) - 64px));
+  height: min(680px, calc(var(--safe-area-height) - 96px));
   min-height: 240px;
   display: flex;
   flex-direction: column;
@@ -153,13 +160,6 @@
   border-radius: 4px;
   box-shadow: 0 20px 64px #26262626;
 }
-.table-dialog-count {
-  border-left: 1px solid var(--line);
-  margin-left: 5px;
-  padding-left: 13px;
-  color: var(--slate);
-  font: 12px var(--mono);
-}
 .table-dialog .drawer-header > .icon-button {
   border: 0;
 }
@@ -169,30 +169,36 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  line-height: 1.5;
   padding: 0 19px;
   border-bottom: 1px solid var(--line);
 }
 .drawer-identity {
   display: flex;
   gap: 10px;
-  align-items: center;
+  align-items: baseline;
   min-width: 0;
+  height: 100%;
 }
 .drawer-identity h2 {
   flex-shrink: 0;
 }
 .table-tabs {
-  align-self: stretch;
   display: flex;
+  align-items: baseline;
+  height: 100%;
   gap: 4px;
   margin: 0 8px;
 }
 .table-tabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
   padding: 0 14px;
-  height: 56px;
+  height: 100%;
   color: var(--slate);
   font-size: 13px;
   white-space: nowrap;
@@ -212,10 +218,6 @@
 }
 .raw-track-toggle {
   flex-shrink: 0;
-  min-height: 28px;
-  padding: 0 8px;
-  font-size: 11px;
-  white-space: nowrap;
 }
 .raw-track-toggle[aria-pressed="true"] {
   color: var(--orange-hover);
@@ -223,15 +225,11 @@
   background: #fff9f3;
 }
 .active-project {
-  gap: 5px;
   min-width: 0;
   max-width: 180px;
-  min-height: 28px;
-  padding: 0 8px;
   color: var(--orange-hover);
   border-color: #f9cba2;
   background: #fff9f3;
-  font-size: 11px;
   flex-shrink: 0;
 }
 .active-project span {
@@ -241,9 +239,6 @@
 }
 .new-project {
   flex-shrink: 0;
-  min-height: 30px;
-  padding: 0 10px;
-  font-size: 12px;
 }
 .project-table {
   width: 100%;
@@ -292,7 +287,7 @@
   outline-offset: -3px;
   z-index: 1;
 }
-.project-table tbody tr:hover {
+.project-table tbody tr:hover:not(.project-selected) {
   background: var(--vellum);
 }
 .project-table td {
@@ -322,16 +317,19 @@
     10px "Noto Sans SC Variable",
     sans-serif;
 }
+.project-dates {
+  display: grid;
+  grid-column: span 2;
+  grid-template-columns: subgrid;
+}
 .project-start,
 .project-end {
   font-family: var(--mono);
 }
-.project-start small,
-.project-end small {
-  display: block;
-  margin-top: 4px;
-  font-size: 10px;
-  color: var(--ash);
+.project-dates .table-date {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 .project-count {
   font-family: var(--mono);
@@ -339,16 +337,6 @@
 .project-actions {
   display: flex;
   gap: 7px;
-}
-.project-actions .button {
-  padding: 0 8px;
-  gap: 5px;
-  min-height: 29px;
-  font-size: 11px;
-}
-.project-selected {
-  background: #fff9f3;
-  box-shadow: inset 2px 0 var(--orange);
 }
 .form-dialog-overlay {
   position: fixed;
@@ -358,12 +346,10 @@
 }
 .form-dialog {
   position: fixed;
-  left: 50%;
-  top: 50%;
   transform: translate(-50%, -50%);
   z-index: 51;
-  width: min(560px, calc(100vw - 32px));
-  max-height: calc(100dvh - 40px);
+  width: min(560px, calc(var(--safe-area-width) - 32px));
+  max-height: calc(var(--safe-area-height) - 40px);
   overflow: auto;
   padding: 24px;
   background: white;
@@ -419,7 +405,8 @@
   padding-top: 18px;
   border-top: 1px solid var(--line);
 }
-.form-error {
+.form-error,
+.filter-error {
   color: #b43b25;
   font-size: 12px;
   line-height: 1.5;
@@ -433,20 +420,13 @@
   padding-top: 18px;
   border-top: 1px solid var(--line);
 }
-.project-save {
-  color: white;
-  background: var(--ink);
-  border-color: var(--ink);
-}
-.project-save:hover {
-  background: #424242;
-}
 .section-index {
   color: var(--ash);
-  font: 11px var(--mono);
+  font: 11px/1.5 var(--mono);
   margin-right: 2px;
 }
 .drawer-identity > svg {
+  align-self: center;
   color: var(--slate);
 }
 .drawer-identity h2 {
@@ -455,16 +435,17 @@
   letter-spacing: 0.3px;
 }
 .drawer-count {
-  font: 12px var(--mono);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font: 12px/1.5 var(--mono);
   border-left: 1px solid var(--line);
   padding-left: 13px;
   margin-left: 5px;
 }
-.drawer-count > span {
-  font-family: inherit;
+.drawer-count-unit {
+  font-family: var(--sans);
   color: var(--slate);
-  font-size: 11px;
-  margin-left: 3px;
 }
 .drawer-actions {
   display: flex;
@@ -487,6 +468,7 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
+  scroll-padding-top: 34px;
   scrollbar-width: thin;
   scrollbar-color: #c7c7c7 white;
 }
@@ -546,7 +528,7 @@
   font-size: 12px;
   cursor: pointer;
 }
-.point-table tbody tr:hover {
+.point-table tbody tr:hover:not(.row-selected) {
   background: var(--vellum);
 }
 .point-table td {
@@ -559,11 +541,13 @@
 .point-table td[data-column="city"] {
   font-family: inherit;
 }
-.point-table .row-selected {
+.point-table .row-selected,
+.project-table .project-selected {
   background: #fff9f3;
   box-shadow: inset 2px 0 var(--orange);
 }
-.row-selected td {
+.row-selected td,
+.project-selected td {
   color: var(--ink);
 }
 .row-id {
@@ -577,6 +561,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
+  white-space: nowrap;
 }
 .table-date > span {
   color: var(--ash);

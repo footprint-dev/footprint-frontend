@@ -289,7 +289,7 @@ export const Timeline = memo(function Timeline({
           {!hasData && <option value="">选择年月</option>}
           {months.map((value) => (
             <option key={value} value={value}>
-              {value.replace("-", " 年 ")} 月
+              {value.replace("-", "年")}月
             </option>
           ))}
         </select>

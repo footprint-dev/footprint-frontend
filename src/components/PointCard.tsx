@@ -60,7 +60,7 @@ export function PointCard({
     >
       <div className="point-card-heading">
         <div className="point-card-identity">
-          <span className="eyebrow">位置点 / {selected.id}</span>
+          <span className="eyebrow">位置点 #{selected.id}</span>
           <h3>{selected.city || "未记录城市"}</h3>
         </div>
         <IconButton label="关闭位置详情" onClick={onClose}>

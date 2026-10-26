@@ -1,6 +1,6 @@
 .timeline-popover {
   width: 1100px;
-  max-width: calc(100vw - 24px);
+  max-width: calc(var(--safe-area-width) - 24px);
   padding: 12px 18px;
   max-height: var(--radix-popover-content-available-height);
   overflow-y: auto;

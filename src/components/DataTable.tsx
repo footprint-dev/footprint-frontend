@@ -10,8 +10,9 @@ import {
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowDown, ArrowUp, ArrowUpDown, LocateFixed } from "lucide-react";
-import { formatDate, formatTime, type LocationPoint } from "../lib/model";
+import type { LocationPoint } from "../lib/model";
 import { useMobileLayout } from "../hooks/useMobileLayout";
+import { TableDateTime } from "./TableDateTime";
 export const DataTable = memo(function DataTable({
   points,
   selectedId,
@@ -33,18 +34,13 @@ export const DataTable = memo(function DataTable({
         accessorKey: "id",
         header: "编号",
         cell: (info) => (
-          <span className="row-id">{String(info.getValue())}</span>
+          <span className="row-id">#{String(info.getValue())}</span>
         ),
       },
       {
         accessorKey: "timestamp",
         header: "观测时间",
-        cell: (info) => (
-          <span className="table-date">
-            {formatDate(Number(info.getValue()))}
-            <span>{formatTime(Number(info.getValue()))}</span>
-          </span>
-        ),
+        cell: (info) => <TableDateTime timestamp={Number(info.getValue())} />,
       },
       {
         accessorKey: "longitude",

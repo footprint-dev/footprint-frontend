@@ -11,6 +11,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import * as Popover from "@radix-ui/react-popover";
 import { ArrowLeft, X } from "lucide-react";
 import { IconButton } from "./ui";
+import { overlayBoundary } from "../lib/map-layout";
 
 function visibleViewport() {
   const viewport = window.visualViewport;
@@ -48,8 +49,10 @@ export function FilterSurface({
   const headingRef = useRef<HTMLHeadingElement>(null);
   const interactedOutsideRef = useRef(false);
   const [viewport, setViewport] = useState(visibleViewport);
+  const boundary = overlayBoundary(anchor);
+  const useSheet =
+    mobile || (boundary?.clientHeight ?? window.innerHeight) <= 480;
   useEffect(() => {
-    if (!mobile) return;
     const viewport = window.visualViewport;
     const update = () => setViewport(visibleViewport());
     update();
@@ -61,16 +64,16 @@ export function FilterSurface({
       viewport?.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, [mobile]);
+  }, []);
 
   const focusContent = useCallback(() => {
     const content = contentRef.current;
-    const target = mobile
+    const target = useSheet
       ? headingRef.current
       : (content?.querySelector<HTMLElement>("input:checked") ??
         content?.querySelector<HTMLElement>("input, [data-filter-field]"));
     target?.focus({ preventScroll: true });
-  }, [mobile]);
+  }, [useSheet]);
   useLayoutEffect(focusContent, [focusContent, title]);
 
   const titleContent = (
@@ -86,7 +89,7 @@ export function FilterSurface({
           <ArrowLeft size={16} />
         </IconButton>
       )}
-      {mobile ? (
+      {useSheet ? (
         <Dialog.Title asChild>
           <h3 ref={headingRef} tabIndex={-1}>
             {titleContent}
@@ -116,7 +119,7 @@ export function FilterSurface({
     if (!open) onClose();
   };
 
-  if (mobile)
+  if (useSheet)
     return (
       <Dialog.Root open onOpenChange={changeOpen}>
         <Dialog.Portal>
@@ -126,7 +129,11 @@ export function FilterSurface({
             className="point-filter-surface point-filter-sheet"
             style={{
               bottom: viewport.bottom,
-              maxHeight: viewport.height * 0.8,
+              maxHeight:
+                Math.min(
+                  viewport.height,
+                  boundary?.clientHeight ?? viewport.height,
+                ) * 0.8,
             }}
             aria-describedby={undefined}
             {...focusEvents}
@@ -149,6 +156,7 @@ export function FilterSurface({
           align="start"
           sideOffset={8}
           collisionPadding={12}
+          collisionBoundary={boundary}
           aria-labelledby={titleId}
           {...focusEvents}
           onInteractOutside={(event) => {
